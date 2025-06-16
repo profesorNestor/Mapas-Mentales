@@ -7,7 +7,7 @@
     
     <!-- Librerías -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.1/sweetalert2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
@@ -21,6 +21,9 @@
             --primary: #6366f1;
             --secondary: #818cf8;
             --accent: #c084fc;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
             --dark: #1e1b4b;
             --light: #f8fafc;
             --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -91,7 +94,7 @@
             gap: 1rem;
             justify-content: center;
             margin: 2rem auto;
-            max-width: 800px;
+            max-width: 600px;
             padding: 0 2rem;
             flex-wrap: wrap;
         }
@@ -135,6 +138,9 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .btn-primary {
@@ -148,22 +154,34 @@
             box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
         }
         
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .btn-primary:active::before {
-            width: 300px;
-            height: 300px;
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
         }
         
         /* Opciones de visualización */
@@ -231,7 +249,7 @@
         
         /* Mensaje de canvas vacío */
         #mindmap::after {
-            content: 'Ingresa un tema y genera tu mapa mental';
+            content: 'Ingresa un tema y genera tu mapa mental\n\n💡 Tip: Doble clic para editar nodos\n🖱️ Clic derecho para más opciones';
             position: absolute;
             top: 50%;
             left: 50%;
@@ -242,6 +260,8 @@
             pointer-events: none;
             opacity: 1;
             transition: opacity 0.3s ease;
+            white-space: pre-line;
+            line-height: 1.6;
         }
         
         #mindmap.has-content::after {
@@ -262,52 +282,43 @@
             flex-wrap: wrap;
         }
         
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--light);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .btn-ai {
-            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-            color: white;
-            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-ai:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(245, 158, 11, 0.6);
-        }
-        
-        .btn-ai::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-        
-        /* Indicador de modo */
-        .mode-indicator {
+        /* Menú contextual */
+        .context-menu {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            background: rgba(30, 27, 75, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 0.5rem 0;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .context-menu-item {
+            padding: 0.7rem 1rem;
+            cursor: pointer;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s ease;
+        }
+        
+        .context-menu-item:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+        
+        .context-menu-item.danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        
+        /* Indicador de selección */
+        .selection-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
             padding: 0.5rem 1rem;
@@ -319,34 +330,8 @@
             animation: slideIn 0.5s ease-out;
         }
         
-        @keyframes slideIn {
-            from {
-                transform: translateX(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        .mode-indicator.show {
+        .selection-indicator.show {
             display: block;
-        }
-        
-        .mode-indicator.ai-mode {
-            border-color: #f59e0b;
-            color: #fbbf24;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-        }
-        .vis-tooltip {
-            background: rgba(30, 27, 75, 0.95) !important;
-            border: 1px solid var(--primary) !important;
-            border-radius: 10px !important;
-            color: white !important;
-            font-family: inherit !important;
-            backdrop-filter: blur(10px) !important;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
         }
         
         /* Animación de carga */
@@ -372,11 +357,23 @@
             to { transform: rotate(360deg); }
         }
         
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .header h1 { font-size: 2rem; }
             #mindmap { height: 400px; width: calc(100% - 2rem); }
             .controls { padding: 0 1rem; }
+            .action-buttons { padding: 0 1rem; }
         }
     </style>
 </head>
@@ -392,11 +389,8 @@
         <div class="input-container">
             <input type="text" id="promptInput" placeholder="Ingresa tu idea central (ej: Energía y tipos de energía)">
         </div>
-        <button class="btn btn-primary" onclick="generateMindMap(false)">
-            ⚡ MindFlow (Local)
-        </button>
-        <button class="btn btn-ai" onclick="generateMindMap(true)">
-            ✨ Generar con IA
+        <button class="btn btn-primary" onclick="generateMindMap()">
+            ⚡ Generar MindFlow
         </button>
     </div>
     
@@ -427,23 +421,80 @@
     <div id="mindmap"></div>
     
     <div class="action-buttons">
-        <button class="btn btn-secondary" onclick="addNode()">➕ Añadir Nodo</button>
+        <button class="btn btn-success" onclick="addNode()">➕ Añadir Nodo</button>
+        <button class="btn btn-warning" onclick="addConnection()">🔗 Conectar Nodos</button>
         <button class="btn btn-secondary" onclick="exportPNG()">📷 Exportar PNG</button>
-        <button class="btn btn-secondary" onclick="exportSVG()">📄 Exportar SVG</button>
-        <button class="btn btn-secondary" onclick="resetMap()">🔄 Reiniciar</button>
+        <button class="btn btn-secondary" onclick="togglePhysics()">⚡ Física ON/OFF</button>
+        <button class="btn btn-danger" onclick="resetMap()">🔄 Reiniciar</button>
+    </div>
+    
+    <!-- Menú contextual -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="editSelectedNode()">
+            ✏️ Editar
+        </div>
+        <div class="context-menu-item" onclick="addChildNode()">
+            ➕ Añadir hijo
+        </div>
+        <div class="context-menu-item" onclick="duplicateNode()">
+            📋 Duplicar
+        </div>
+        <div class="context-menu-item" onclick="changeNodeColor()">
+            🎨 Cambiar color
+        </div>
+        <div class="context-menu-item danger" onclick="deleteSelectedNode()">
+            🗑️ Eliminar
+        </div>
     </div>
     
     <div class="loading">
         <div class="loading-spinner"></div>
     </div>
     
-    <div class="mode-indicator" id="modeIndicator"></div>
+    <div class="selection-indicator" id="selectionIndicator"></div>
     
     <script>
+        // Verificar si las librerías están cargadas
+        function checkLibraries() {
+            if (typeof vis === 'undefined') {
+                alert('Error: La librería Vis.js no se pudo cargar. Por favor, recarga la página.');
+                return false;
+            }
+            if (typeof Swal === 'undefined') {
+                console.warn('SweetAlert2 no está disponible, usando alerts nativos como fallback');
+                // Crear un objeto Swal de fallback
+                window.Swal = {
+                    fire: function(options) {
+                        if (typeof options === 'string') {
+                            alert(options);
+                            return Promise.resolve({ isConfirmed: true });
+                        } else if (options.input) {
+                            const result = prompt(options.title || '', options.inputValue || '');
+                            return Promise.resolve({ 
+                                isConfirmed: result !== null, 
+                                value: result 
+                            });
+                        } else if (options.showCancelButton) {
+                            const result = confirm(options.title + '\n' + (options.text || ''));
+                            return Promise.resolve({ isConfirmed: result });
+                        } else {
+                            alert((options.title || '') + '\n' + (options.text || ''));
+                            return Promise.resolve({ isConfirmed: true });
+                        }
+                    }
+                };
+            }
+            return true;
+        }
+
         let network = null;
         let nodes = null;
         let edges = null;
         let nodeIdCounter = 0;
+        let selectedNodes = [];
+        let selectedEdges = [];
+        let physicsEnabled = true;
+        let lastRightClickedNode = null;
         
         // Temas predefinidos
         const themes = {
@@ -490,6 +541,7 @@
                     chosen: {
                         node: function(values, id, selected, hovering) {
                             values.size = 30;
+                            values.borderWidth = 4;
                             values.shadow = {
                                 enabled: true,
                                 size: 20,
@@ -536,7 +588,8 @@
                 interaction: {
                     hover: true,
                     tooltipDelay: 200,
-                    hideEdgesOnDrag: true
+                    hideEdgesOnDrag: true,
+                    selectConnectedEdges: false
                 }
             };
             
@@ -544,37 +597,150 @@
             nodes = data.nodes;
             edges = data.edges;
             
-            // Eventos interactivos
+            // Eventos interactivos mejorados
             network.on('doubleClick', function(params) {
                 if (params.nodes.length > 0) {
                     editNode(params.nodes[0]);
+                } else {
+                    // Doble clic en espacio vacío: crear nuevo nodo
+                    const position = params.pointer.canvas;
+                    createNodeAtPosition(position.x, position.y);
+                }
+            });
+            
+            network.on('oncontext', function(params) {
+                params.event.preventDefault();
+                if (params.nodes.length > 0) {
+                    lastRightClickedNode = params.nodes[0];
+                    showContextMenu(params.event.clientX, params.event.clientY);
+                }
+            });
+            
+            network.on('click', function(params) {
+                hideContextMenu();
+                updateSelection(params.nodes, params.edges);
+            });
+            
+            network.on('selectNode', function(params) {
+                updateSelection(params.nodes, params.edges);
+            });
+            
+            network.on('deselectNode', function(params) {
+                updateSelection(params.nodes, params.edges);
+            });
+            
+            // Ocultar menú contextual al hacer clic fuera
+            document.addEventListener('click', hideContextMenu);
+            
+            // Atajos de teclado
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+        
+        // Crear nodo en posición específica
+        function createNodeAtPosition(x, y) {
+            Swal.fire({
+                title: 'Nuevo nodo',
+                input: 'text',
+                inputPlaceholder: 'Texto del nodo',
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                cancelButtonText: 'Cancelar',
+                background: '#1e1b4b',
+                color: '#f8fafc'
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    const newNodeId = nodeIdCounter++;
+                    const canvasPosition = network.canvasToDOM({x: x, y: y});
+                    const networkPosition = network.DOMtoCanvas(canvasPosition);
+                    
+                    nodes.add({
+                        id: newNodeId,
+                        label: result.value,
+                        x: networkPosition.x,
+                        y: networkPosition.y,
+                        color: {
+                            background: currentTheme.node.background,
+                            border: currentTheme.node.border
+                        },
+                        font: { color: currentTheme.node.font }
+                    });
+                    
+                    document.getElementById('mindmap').classList.add('has-content');
                 }
             });
         }
         
-        // Función de alerta alternativa
-        function showAlert(options) {
-            if (typeof Swal !== 'undefined') {
-                return Swal.fire(options);
-            } else {
-                // Fallback a alert nativo
-                if (options.icon === 'warning' || options.icon === 'error') {
-                    alert('⚠️ ' + options.title + '\n\n' + options.text);
-                } else {
-                    alert(options.title + '\n\n' + (options.text || options.html || ''));
-                }
+        // Manejar atajos de teclado
+        function handleKeyboardShortcuts(event) {
+            if (event.target.tagName === 'INPUT') return;
+            
+            switch(event.key) {
+                case 'Delete':
+                case 'Backspace':
+                    if (selectedNodes.length > 0) {
+                        deleteSelectedNodes();
+                    }
+                    break;
+                case 'Escape':
+                    network.unselectAll();
+                    hideContextMenu();
+                    break;
+                case 'a':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        network.selectNodes(nodes.getIds());
+                    }
+                    break;
+                case 'Enter':
+                    if (selectedNodes.length === 1) {
+                        editNode(selectedNodes[0]);
+                    }
+                    break;
+                case 'n':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        addNode();
+                    }
+                    break;
             }
         }
         
-        // Configuración de Gemini AI Studio
-        const GEMINI_API_KEY = 'AIzaSyDci7nFs9-JFtdFiRpbkffFes5JicHRqB4'; // Reemplaza con tu API key de Gemini
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        // Actualizar selección y mostrar indicador
+        function updateSelection(nodeIds, edgeIds) {
+            selectedNodes = nodeIds || [];
+            selectedEdges = edgeIds || [];
+            
+            const indicator = document.getElementById('selectionIndicator');
+            
+            if (selectedNodes.length > 0) {
+                const nodeText = selectedNodes.length === 1 ? 
+                    `Nodo seleccionado: ${nodes.get(selectedNodes[0]).label}` :
+                    `${selectedNodes.length} nodos seleccionados`;
+                indicator.textContent = nodeText;
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+        
+        // Mostrar menú contextual
+        function showContextMenu(x, y) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.style.display = 'block';
+        }
+        
+        // Ocultar menú contextual
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
         
         // Generar mapa mental basado en el prompt
-        async function generateMindMap() {
+        function generateMindMap() {
             const prompt = document.getElementById('promptInput').value.trim();
             if (!prompt) {
-                showAlert({
+                Swal.fire({
                     icon: 'warning',
                     title: 'Campo vacío',
                     text: 'Por favor, ingresa una idea o tema para generar el mapa mental',
@@ -592,266 +758,43 @@
             // Mostrar loading
             document.querySelector('.loading').style.display = 'block';
             
-            try {
-                // Intentar generar con Gemini AI
-                const mindMapData = await generateWithGemini(prompt);
-                if (mindMapData) {
-                    createMindMapFromAI(mindMapData);
-                } else {
-                    // Fallback a generación local
-                    generateExampleMap(prompt);
-                }
-            } catch (error) {
-                console.error('Error con Gemini:', error);
-                // Fallback a generación local
+            setTimeout(() => {
                 generateExampleMap(prompt);
-            }
-            
-            // Marcar que hay contenido
-            document.getElementById('mindmap').classList.add('has-content');
-            
-            document.querySelector('.loading').style.display = 'none';
-            
-            // Animación de entrada
-            network.fit({
-                animation: {
-                    duration: 1000,
-                    easingFunction: 'easeInOutQuad'
-                }
-            });
-        }
-        
-        // Generar mapa mental usando Gemini AI
-        async function generateWithGemini(topic) {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyDci7nFs9-JFtdFiRpbkffFes5JicHRqB4') {
-                console.log('API Key no configurada, usando generación local');
-                showAlert({
-                    icon: 'warning',
-                    title: 'API Key no configurada',
-                    text: 'Por favor, configura tu API key de Gemini para usar la generación con IA',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                });
-                return null;
-            }
-            
-            const prompt = `Eres un experto en crear mapas mentales. Genera un mapa mental estructurado sobre: "${topic}".
-            
-            Responde ÚNICAMENTE con un JSON válido (sin markdown, sin explicaciones) en este formato exacto:
-            {
-                "central": "Tema Central",
-                "branches": [
-                    {
-                        "concept": "Concepto Principal 1",
-                        "subconcepts": ["Subconcepto 1", "Subconcepto 2", "Subconcepto 3"]
-                    },
-                    {
-                        "concept": "Concepto Principal 2",
-                        "subconcepts": ["Subconcepto 1", "Subconcepto 2"]
+                
+                // Marcar que hay contenido
+                document.getElementById('mindmap').classList.add('has-content');
+                
+                document.querySelector('.loading').style.display = 'none';
+                
+                // Animación de entrada
+                network.fit({
+                    animation: {
+                        duration: 1000,
+                        easingFunction: 'easeInOutQuad'
                     }
-                ]
-            }
-            
-            Requisitos:
-            - Genera entre 4-6 ramas principales
-            - Cada rama debe tener 2-4 subconceptos
-            - Los conceptos deben ser concisos y relevantes
-            - Usa el mismo idioma que el tema proporcionado`;
-            
-            try {
-                console.log('Llamando a Gemini AI...');
-                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: prompt
-                            }]
-                        }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            topK: 40,
-                            topP: 0.95,
-                            maxOutputTokens: 1024,
-                        },
-                        safetySettings: [
-                            {
-                                category: "HARM_CATEGORY_HARASSMENT",
-                                threshold: "BLOCK_NONE"
-                            },
-                            {
-                                category: "HARM_CATEGORY_HATE_SPEECH",
-                                threshold: "BLOCK_NONE"
-                            },
-                            {
-                                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                                threshold: "BLOCK_NONE"
-                            },
-                            {
-                                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                                threshold: "BLOCK_NONE"
-                            }
-                        ]
-                    })
                 });
                 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => null);
-                    const errorMessage = errorData?.error?.message || `Error HTTP: ${response.status}`;
-                    console.error('Error de API:', errorMessage);
-                    
-                    // Mostrar error específico al usuario
-                    if (response.status === 400) {
-                        showAlert({
-                            icon: 'error',
-                            title: 'Error de API',
-                            text: 'La API key parece ser inválida. Verifica que sea correcta.',
-                            background: '#1e1b4b',
-                            color: '#f8fafc'
-                        });
-                    } else if (response.status === 429) {
-                        showAlert({
-                            icon: 'warning',
-                            title: 'Límite excedido',
-                            text: 'Has excedido el límite de solicitudes. Intenta más tarde.',
-                            background: '#1e1b4b',
-                            color: '#f8fafc'
-                        });
-                    }
-                    
-                    throw new Error(errorMessage);
-                }
-                
-                const data = await response.json();
-                console.log('Respuesta de Gemini:', data);
-                
-                // Verificar que haya contenido en la respuesta
-                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-                    throw new Error('Respuesta vacía de Gemini');
-                }
-                
-                // Extraer el texto de la respuesta de Gemini
-                const generatedText = data.candidates[0].content.parts[0].text;
-                console.log('Texto generado:', generatedText);
-                
-                // Limpiar el texto (remover markdown si existe)
-                const cleanedText = generatedText
-                    .replace(/```json\n?/g, '')
-                    .replace(/```\n?/g, '')
-                    .replace(/^\s*```\s*$/gm, '')
-                    .trim();
-                
-                console.log('Texto limpio:', cleanedText);
-                
-                // Parsear el JSON
-                const mindMapData = JSON.parse(cleanedText);
-                console.log('Mapa mental parseado:', mindMapData);
-                
-                // Validar estructura
-                if (!mindMapData.central || !mindMapData.branches || !Array.isArray(mindMapData.branches)) {
-                    throw new Error('Estructura de mapa mental inválida');
-                }
-                
-                return mindMapData;
-                
-            } catch (error) {
-                console.error('Error detallado al llamar a Gemini AI:', error);
-                
-                // Mostrar error al usuario con más detalles
-                let errorMessage = 'No se pudo generar con Gemini AI. Usando generación local.';
-                
-                if (error.message.includes('API key')) {
-                    errorMessage = 'Problema con la API key. Verifica que sea válida.';
-                } else if (error.message.includes('JSON')) {
-                    errorMessage = 'Error al procesar la respuesta de la IA.';
-                }
-                
-                showAlert({
-                    icon: 'info',
-                    title: 'Generación con IA',
-                    text: errorMessage,
+                // Mostrar mensaje de éxito
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Mapa generado!',
+                    text: 'Tu mapa mental está listo. Puedes editarlo, añadir nodos o cambiar conexiones.',
                     background: '#1e1b4b',
                     color: '#f8fafc',
                     timer: 3000,
-                    showConfirmButton: false
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true
                 });
-                
-                return null;
-            }
+            }, 1000);
         }
         
-        // Crear mapa mental desde respuesta de AI
-        function createMindMapFromAI(data) {
-            const theme = currentTheme;
-            
-            // Nodo central
-            const centralId = nodeIdCounter++;
-            nodes.add({
-                id: centralId,
-                label: data.central,
-                level: 0,
-                color: {
-                    background: theme.node.background,
-                    border: theme.node.border
-                },
-                font: { color: theme.node.font, size: 20 },
-                size: 35
-            });
-            
-            // Crear ramas y subramas
-            data.branches.forEach((branch, index) => {
-                const branchId = nodeIdCounter++;
-                
-                // Nodo de rama principal
-                nodes.add({
-                    id: branchId,
-                    label: branch.concept,
-                    level: 1,
-                    color: {
-                        background: theme.node.background + 'dd',
-                        border: theme.node.border
-                    },
-                    font: { color: theme.node.font }
-                });
-                
-                edges.add({
-                    from: centralId,
-                    to: branchId,
-                    color: { color: theme.edge.color, highlight: theme.edge.highlight }
-                });
-                
-                // Subconceptos
-                branch.subconcepts.forEach((subconcept, subIndex) => {
-                    const subId = nodeIdCounter++;
-                    nodes.add({
-                        id: subId,
-                        label: subconcept,
-                        level: 2,
-                        color: {
-                            background: theme.node.background + 'aa',
-                            border: theme.node.border
-                        },
-                        font: { color: theme.node.font, size: 14 }
-                    });
-                    
-                    edges.add({
-                        from: branchId,
-                        to: subId,
-                        color: { color: theme.edge.color + 'aa', highlight: theme.edge.highlight }
-                    });
-                });
-            });
-        }
-        
-        // Generar un mapa de ejemplo basado en el prompt
+        // Generar un mapa de ejemplo mejorado
         function generateExampleMap(prompt) {
             const centralId = nodeIdCounter++;
             const theme = currentTheme;
             
-            // Nodo central
+            // Nodo central más prominente
             nodes.add({
                 id: centralId,
                 label: prompt,
@@ -860,15 +803,17 @@
                     background: theme.node.background,
                     border: theme.node.border
                 },
-                font: { color: theme.node.font, size: 20 },
-                size: 35
+                font: { color: theme.node.font, size: 22 },
+                size: 40,
+                borderWidth: 3
             });
             
-            // Generar nodos secundarios basados en palabras clave
+            // Generar nodos secundarios basados en el tema
             const concepts = generateConcepts(prompt);
             
             concepts.forEach((concept, index) => {
                 const nodeId = nodeIdCounter++;
+                
                 nodes.add({
                     id: nodeId,
                     label: concept,
@@ -877,19 +822,21 @@
                         background: theme.node.background + 'dd',
                         border: theme.node.border
                     },
-                    font: { color: theme.node.font }
+                    font: { color: theme.node.font, size: 16 }
                 });
                 
                 edges.add({
                     from: centralId,
                     to: nodeId,
-                    color: { color: theme.edge.color, highlight: theme.edge.highlight }
+                    color: { color: theme.edge.color, highlight: theme.edge.highlight },
+                    width: 3
                 });
                 
-                // Generar subnodos
+                // Generar subnodos con variación
                 const subconcepts = generateSubconcepts(concept);
                 subconcepts.forEach((sub, subIndex) => {
                     const subNodeId = nodeIdCounter++;
+                    
                     nodes.add({
                         id: subNodeId,
                         label: sub,
@@ -904,32 +851,46 @@
                     edges.add({
                         from: nodeId,
                         to: subNodeId,
-                        color: { color: theme.edge.color + 'aa', highlight: theme.edge.highlight }
+                        color: { 
+                            color: theme.edge.color + 'aa', 
+                            highlight: theme.edge.highlight 
+                        },
+                        width: 2
                     });
                 });
             });
         }
         
-        // Generar conceptos basados en el prompt
+        // Generar conceptos mejorados basados en el prompt
         function generateConcepts(prompt) {
             const lowerPrompt = prompt.toLowerCase();
             
-            // Base de conocimiento simple para generar conceptos relevantes
             if (lowerPrompt.includes('energía')) {
-                return ['Energía Cinética', 'Energía Potencial', 'Energía Térmica', 'Energía Eléctrica', 'Energía Nuclear'];
+                return ['Energía Cinética', 'Energía Potencial', 'Energía Térmica', 'Energía Eléctrica', 'Energía Nuclear', 'Energía Renovable'];
             } else if (lowerPrompt.includes('programación')) {
-                return ['Variables', 'Funciones', 'Bucles', 'Condicionales', 'Estructuras de Datos'];
+                return ['Variables', 'Funciones', 'Bucles', 'Condicionales', 'Estructuras de Datos', 'Algoritmos'];
             } else if (lowerPrompt.includes('marketing')) {
-                return ['Segmentación', 'Posicionamiento', 'Marketing Mix', 'Análisis FODA', 'Marketing Digital'];
+                return ['Segmentación', 'Posicionamiento', 'Marketing Mix', 'Análisis FODA', 'Marketing Digital', 'Branding'];
             } else if (lowerPrompt.includes('biología')) {
-                return ['Células', 'Genética', 'Evolución', 'Ecosistemas', 'Anatomía'];
+                return ['Células', 'Genética', 'Evolución', 'Ecosistemas', 'Anatomía', 'Fisiología'];
+            } else if (lowerPrompt.includes('matemáticas') || lowerPrompt.includes('matemática')) {
+                return ['Álgebra', 'Geometría', 'Cálculo', 'Estadística', 'Trigonometría', 'Probabilidad'];
+            } else if (lowerPrompt.includes('historia')) {
+                return ['Prehistoria', 'Antigua', 'Medieval', 'Moderna', 'Contemporánea', 'Siglo XXI'];
+            } else if (lowerPrompt.includes('ciencia')) {
+                return ['Física', 'Química', 'Biología', 'Matemáticas', 'Astronomía', 'Geología'];
+            } else if (lowerPrompt.includes('arte')) {
+                return ['Pintura', 'Escultura', 'Música', 'Literatura', 'Teatro', 'Cine'];
+            } else if (lowerPrompt.includes('deporte')) {
+                return ['Fútbol', 'Baloncesto', 'Natación', 'Atletismo', 'Tenis', 'Ciclismo'];
+            } else if (lowerPrompt.includes('tecnología')) {
+                return ['Hardware', 'Software', 'Internet', 'IA', 'Robótica', 'Ciberseguridad'];
             } else {
-                // Genérico
-                return ['Definición', 'Características', 'Tipos', 'Aplicaciones', 'Ejemplos'];
+                return ['Definición', 'Características', 'Tipos', 'Aplicaciones', 'Ejemplos', 'Ventajas'];
             }
         }
         
-        // Generar subconceptos
+        // Generar subconceptos completos
         function generateSubconcepts(concept) {
             const lowerConcept = concept.toLowerCase();
             
@@ -937,12 +898,48 @@
                 return ['Movimiento', 'Velocidad', 'Fórmula: ½mv²'];
             } else if (lowerConcept.includes('potencial')) {
                 return ['Gravedad', 'Altura', 'Fórmula: mgh'];
+            } else if (lowerConcept.includes('térmica')) {
+                return ['Calor', 'Temperatura', 'Transmisión'];
+            } else if (lowerConcept.includes('eléctrica')) {
+                return ['Corriente', 'Voltaje', 'Resistencia'];
+            } else if (lowerConcept.includes('nuclear')) {
+                return ['Fisión', 'Fusión', 'Radiactividad'];
+            } else if (lowerConcept.includes('renovable')) {
+                return ['Solar', 'Eólica', 'Hidráulica'];
             } else if (lowerConcept.includes('variables')) {
                 return ['Tipos de datos', 'Declaración', 'Alcance'];
             } else if (lowerConcept.includes('funciones')) {
                 return ['Parámetros', 'Retorno', 'Recursividad'];
+            } else if (lowerConcept.includes('bucles')) {
+                return ['For', 'While', 'Do-While'];
+            } else if (lowerConcept.includes('condicionales')) {
+                return ['If-Else', 'Switch', 'Operadores'];
+            } else if (lowerConcept.includes('estructuras')) {
+                return ['Arrays', 'Listas', 'Diccionarios'];
+            } else if (lowerConcept.includes('algoritmos')) {
+                return ['Ordenamiento', 'Búsqueda', 'Recursión'];
+            } else if (lowerConcept.includes('células')) {
+                return ['Núcleo', 'Citoplasma', 'Membrana'];
+            } else if (lowerConcept.includes('genética')) {
+                return ['ADN', 'ARN', 'Cromosomas'];
+            } else if (lowerConcept.includes('evolución')) {
+                return ['Selección Natural', 'Mutación', 'Adaptación'];
+            } else if (lowerConcept.includes('ecosistemas')) {
+                return ['Productores', 'Consumidores', 'Descomponedores'];
+            } else if (lowerConcept.includes('álgebra')) {
+                return ['Ecuaciones', 'Polinomios', 'Factorización'];
+            } else if (lowerConcept.includes('geometría')) {
+                return ['Puntos', 'Líneas', 'Figuras'];
+            } else if (lowerConcept.includes('cálculo')) {
+                return ['Límites', 'Derivadas', 'Integrales'];
+            } else if (lowerConcept.includes('marketing digital')) {
+                return ['SEO', 'SEM', 'Redes Sociales'];
+            } else if (lowerConcept.includes('segmentación')) {
+                return ['Demográfica', 'Geográfica', 'Psicográfica'];
+            } else if (lowerConcept.includes('branding')) {
+                return ['Logo', 'Identidad', 'Posicionamiento'];
             } else {
-                return ['Ejemplo 1', 'Ejemplo 2'];
+                return ['Elemento 1', 'Elemento 2', 'Elemento 3'];
             }
         }
         
@@ -1032,43 +1029,158 @@
         
         // Añadir nuevo nodo
         async function addNode() {
-            if (typeof Swal !== 'undefined') {
-                const { value: formValues } = await Swal.fire({
-                    title: 'Añadir nuevo nodo',
-                    html:
-                        '<input id="swal-input1" class="swal2-input" placeholder="Texto del nodo">' +
-                        '<input id="swal-input2" class="swal2-input" placeholder="ID del nodo padre (opcional)">',
-                    focusConfirm: false,
-                    showCancelButton: true,
-                    confirmButtonText: 'Añadir',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc',
-                    preConfirm: () => {
-                        return [
-                            document.getElementById('swal-input1').value,
-                            document.getElementById('swal-input2').value
-                        ]
-                    }
+            try {
+                const nodeText = prompt('Ingresa el texto del nuevo nodo:');
+                if (!nodeText) return;
+                
+                const parentId = prompt('ID del nodo padre (opcional, deja vacío si no hay):');
+                
+                const newNodeId = nodeIdCounter++;
+                const parentIdNum = parentId ? parseInt(parentId) : null;
+                
+                nodes.add({
+                    id: newNodeId,
+                    label: nodeText,
+                    color: {
+                        background: currentTheme.node.background,
+                        border: currentTheme.node.border
+                    },
+                    font: { color: currentTheme.node.font }
                 });
                 
-                if (formValues && formValues[0]) {
-                    const newNodeId = nodeIdCounter++;
-                    const parentId = formValues[1] ? parseInt(formValues[1]) : null;
-                    
-                    nodes.add({
-                        id: newNodeId,
-                        label: formValues[0],
-                        color: {
-                            background: currentTheme.node.background,
-                            border: currentTheme.node.border
-                        },
-                        font: { color: currentTheme.node.font }
+                if (parentIdNum && nodes.get(parentIdNum)) {
+                    edges.add({
+                        from: parentIdNum,
+                        to: newNodeId,
+                        color: { 
+                            color: currentTheme.edge.color, 
+                            highlight: currentTheme.edge.highlight 
+                        }
+                    });
+                }
+                
+                document.getElementById('mindmap').classList.add('has-content');
+                network.fit();
+                
+                alert('¡Nodo añadido exitosamente!');
+            } catch (error) {
+                console.error('Error al añadir nodo:', error);
+                alert('Error al añadir el nodo');
+            }
+        }
+        
+        // Añadir conexión entre nodos
+        async function addConnection() {
+            const nodesList = nodes.get();
+            if (nodesList.length < 2) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Faltan nodos',
+                    text: 'Necesitas al menos 2 nodos para crear una conexión',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                });
+                return;
+            }
+            
+            // Mostrar lista de nodos disponibles
+            let nodesInfo = 'Nodos disponibles:\n';
+            nodesList.forEach(node => {
+                nodesInfo += `${node.id}: ${node.label}\n`;
+            });
+            
+            try {
+                const fromId = prompt(nodesInfo + '\nIngresa el ID del nodo origen:');
+                if (!fromId) return;
+                
+                const toId = prompt('Ingresa el ID del nodo destino:');
+                if (!toId) return;
+                
+                const fromIdNum = parseInt(fromId);
+                const toIdNum = parseInt(toId);
+                
+                if (nodes.get(fromIdNum) && nodes.get(toIdNum)) {
+                    edges.add({
+                        from: fromIdNum,
+                        to: toIdNum,
+                        color: { 
+                            color: currentTheme.edge.color, 
+                            highlight: currentTheme.edge.highlight 
+                        }
                     });
                     
-                    if (parentId && nodes.get(parentId)) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Conexión creada!',
+                        text: 'Los nodos han sido conectados exitosamente',
+                        background: '#1e1b4b',
+                        color: '#f8fafc',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert('Error: Uno o ambos nodos no existen');
+                }
+            } catch (error) {
+                console.error('Error al conectar nodos:', error);
+                alert('Error al crear la conexión');
+            }
+        }
+        
+        // Editar nodo
+        async function editNode(nodeId) {
+            const node = nodes.get(nodeId);
+            const { value: newLabel } = await Swal.fire({
+                title: 'Editar nodo',
+                input: 'text',
+                inputValue: node.label,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                background: '#1e1b4b',
+                color: '#f8fafc'
+            });
+            
+            if (newLabel) {
+                nodes.update({ id: nodeId, label: newLabel });
+            }
+        }
+        
+        // Funciones del menú contextual
+        function editSelectedNode() {
+            if (lastRightClickedNode) {
+                editNode(lastRightClickedNode);
+            }
+            hideContextMenu();
+        }
+        
+        function addChildNode() {
+            if (lastRightClickedNode) {
+                Swal.fire({
+                    title: 'Añadir nodo hijo',
+                    input: 'text',
+                    inputPlaceholder: 'Texto del nodo hijo',
+                    showCancelButton: true,
+                    confirmButtonText: 'Crear',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                }).then((result) => {
+                    if (result.isConfirmed && result.value) {
+                        const newNodeId = nodeIdCounter++;
+                        
+                        nodes.add({
+                            id: newNodeId,
+                            label: result.value,
+                            color: {
+                                background: currentTheme.node.background + 'aa',
+                                border: currentTheme.node.border
+                            },
+                            font: { color: currentTheme.node.font }
+                        });
+                        
                         edges.add({
-                            from: parentId,
+                            from: lastRightClickedNode,
                             to: newNodeId,
                             color: { 
                                 color: currentTheme.edge.color, 
@@ -1076,186 +1188,213 @@
                             }
                         });
                     }
-                    
-                    network.fit();
-                }
-            } else {
-                // Fallback simple
-                const nodeText = prompt('Texto del nuevo nodo:');
-                if (nodeText) {
-                    const newNodeId = nodeIdCounter++;
-                    nodes.add({
-                        id: newNodeId,
-                        label: nodeText,
-                        color: {
-                            background: currentTheme.node.background,
-                            border: currentTheme.node.border
-                        },
-                        font: { color: currentTheme.node.font }
-                    });
-                    network.fit();
-                }
-            }
-        }
-        
-        // Editar nodo
-        async function editNode(nodeId) {
-            const node = nodes.get(nodeId);
-            if (typeof Swal !== 'undefined') {
-                const { value: newLabel } = await Swal.fire({
-                    title: 'Editar nodo',
-                    input: 'text',
-                    inputValue: node.label,
-                    showCancelButton: true,
-                    confirmButtonText: 'Guardar',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
                 });
-                
-                if (newLabel) {
-                    nodes.update({ id: nodeId, label: newLabel });
-                }
-            } else {
-                const newLabel = prompt('Nuevo texto para el nodo:', node.label);
-                if (newLabel) {
-                    nodes.update({ id: nodeId, label: newLabel });
-                }
             }
+            hideContextMenu();
         }
         
-        // Exportar a PNG
-        function exportPNG() {
-            const container = document.getElementById('mindmap');
-            html2canvas(container, {
-                backgroundColor: '#0f0f23',
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'mindmap.png';
-                link.href = canvas.toDataURL();
-                link.click();
-            });
+        function duplicateNode() {
+            if (lastRightClickedNode) {
+                const originalNode = nodes.get(lastRightClickedNode);
+                const newNodeId = nodeIdCounter++;
+                
+                nodes.add({
+                    id: newNodeId,
+                    label: originalNode.label + ' (copia)',
+                    color: originalNode.color,
+                    font: originalNode.font
+                });
+            }
+            hideContextMenu();
         }
         
-        // Exportar a SVG
-        function exportSVG() {
-            // Esta es una implementación simplificada
-            showAlert({
-                icon: 'info',
-                title: 'Exportar SVG',
-                text: 'La exportación SVG requiere una implementación más compleja. Por ahora, usa la exportación PNG.',
-                background: '#1e1b4b',
-                color: '#f8fafc'
-            });
-        }
-        
-        // Reiniciar mapa
-        function resetMap() {
-            if (typeof Swal !== 'undefined') {
+        function changeNodeColor() {
+            if (lastRightClickedNode) {
                 Swal.fire({
-                    title: '¿Reiniciar mapa?',
-                    text: 'Se perderán todos los cambios actuales',
-                    icon: 'warning',
+                    title: 'Cambiar color del nodo',
+                    input: 'color',
+                    inputValue: currentTheme.node.background,
                     showCancelButton: true,
-                    confirmButtonText: 'Sí, reiniciar',
+                    confirmButtonText: 'Cambiar',
                     cancelButtonText: 'Cancelar',
                     background: '#1e1b4b',
                     color: '#f8fafc'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Limpiar datos
-                        nodes.clear();
-                        edges.clear();
-                        nodeIdCounter = 0;
-                        document.getElementById('promptInput').value = '';
-                        
-                        // Quitar la marca de contenido
-                        document.getElementById('mindmap').classList.remove('has-content');
-                        
-                        // Reinicializar la red para mostrar el canvas vacío
-                        network.redraw();
-                        network.fit();
-                        
-                        // Mostrar mensaje de confirmación
-                        showAlert({
-                            icon: 'success',
-                            title: 'Mapa reiniciado',
-                            text: 'Puedes comenzar un nuevo mapa mental',
-                            background: '#1e1b4b',
-                            color: '#f8fafc',
-                            timer: 2000,
-                            showConfirmButton: false,
-                            position: 'top-end',
-                            toast: true
+                        const node = nodes.get(lastRightClickedNode);
+                        nodes.update({
+                            id: lastRightClickedNode,
+                            color: {
+                                background: result.value,
+                                border: node.color.border
+                            }
                         });
-                        
-                        // Enfocar el input para facilitar el siguiente uso
-                        document.getElementById('promptInput').focus();
                     }
                 });
-            } else {
-                if (confirm('¿Reiniciar mapa? Se perderán todos los cambios actuales')) {
-                    // Limpiar datos
+            }
+            hideContextMenu();
+        }
+        
+        function deleteSelectedNode() {
+            if (lastRightClickedNode) {
+                Swal.fire({
+                    title: '¿Eliminar nodo?',
+                    text: 'Esta acción no se puede deshacer',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Eliminar aristas conectadas
+                        const connectedEdges = edges.get().filter(edge => 
+                            edge.from === lastRightClickedNode || edge.to === lastRightClickedNode
+                        );
+                        edges.remove(connectedEdges.map(edge => edge.id));
+                        
+                        // Eliminar nodo
+                        nodes.remove(lastRightClickedNode);
+                    }
+                });
+            }
+            hideContextMenu();
+        }
+        
+        function deleteSelectedNodes() {
+            if (selectedNodes.length > 0) {
+                Swal.fire({
+                    title: `¿Eliminar ${selectedNodes.length} nodo(s)?`,
+                    text: 'Esta acción no se puede deshacer',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        selectedNodes.forEach(nodeId => {
+                            // Eliminar aristas conectadas
+                            const connectedEdges = edges.get().filter(edge => 
+                                edge.from === nodeId || edge.to === nodeId
+                            );
+                            edges.remove(connectedEdges.map(edge => edge.id));
+                        });
+                        
+                        // Eliminar nodos
+                        nodes.remove(selectedNodes);
+                        selectedNodes = [];
+                    }
+                });
+            }
+        }
+        
+        // Alternar física
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            network.setOptions({ physics: { enabled: physicsEnabled } });
+            
+            const button = event.target;
+            button.textContent = physicsEnabled ? '⚡ Física ON/OFF' : '🔒 Física ON/OFF';
+            button.style.background = physicsEnabled ? '#f59e0b' : '#ef4444';
+        }
+        
+        // Exportar a PNG
+        function exportPNG() {
+            if (typeof html2canvas === 'undefined') {
+                alert('La función de exportar PNG no está disponible. Por favor, recarga la página.');
+                return;
+            }
+            
+            const container = document.getElementById('mindmap');
+            
+            try {
+                html2canvas(container, {
+                    backgroundColor: '#0f0f23',
+                    scale: 2
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'mindmap.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Imagen exportada!',
+                        text: 'Tu mapa mental ha sido descargado como PNG',
+                        background: '#1e1b4b',
+                        color: '#f8fafc',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }).catch(error => {
+                    console.error('Error al exportar PNG:', error);
+                    alert('Error al exportar la imagen. Inténtalo de nuevo.');
+                });
+            } catch (error) {
+                console.error('Error al inicializar html2canvas:', error);
+                alert('Error al exportar la imagen. La función no está disponible.');
+            }
+        }
+        
+        // Reiniciar mapa
+        function resetMap() {
+            Swal.fire({
+                title: '¿Reiniciar mapa?',
+                text: 'Se perderán todos los cambios actuales',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, reiniciar',
+                cancelButtonText: 'Cancelar',
+                background: '#1e1b4b',
+                color: '#f8fafc'
+            }).then((result) => {
+                if (result.isConfirmed) {
                     nodes.clear();
                     edges.clear();
                     nodeIdCounter = 0;
+                    selectedNodes = [];
+                    selectedEdges = [];
                     document.getElementById('promptInput').value = '';
-                    
-                    // Quitar la marca de contenido
                     document.getElementById('mindmap').classList.remove('has-content');
                     
-                    // Reinicializar la red
-                    network.redraw();
-                    network.fit();
-                    
-                    // Enfocar el input
-                    document.getElementById('promptInput').focus();
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Mapa reiniciado!',
+                        text: 'Puedes comenzar con una nueva idea',
+                        background: '#1e1b4b',
+                        color: '#f8fafc',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
-            }
+            });
         }
         
         // Inicializar la aplicación
         window.onload = function() {
             // Verificar que las librerías estén cargadas
-            if (typeof vis === 'undefined') {
-                console.error('vis-network no está cargado');
-                alert('Error: No se pudo cargar la librería de visualización. Por favor, recarga la página.');
+            if (!checkLibraries()) {
                 return;
             }
             
-            initNetwork();
-            
-            // Permitir generar con Enter (modo local por defecto)
-            document.getElementById('promptInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    if (e.shiftKey) {
-                        generateMindMap(true); // Shift+Enter para IA
-                    } else {
-                        generateMindMap(false); // Enter para local
+            try {
+                initNetwork();
+                
+                // Permitir generar con Enter
+                document.getElementById('promptInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        generateMindMap();
                     }
-                }
-            });
-            
-            // Mostrar tooltip de ayuda después de que todo esté cargado
-            setTimeout(() => {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: '💡 Consejo',
-                        html: `
-                            <p><strong>Dos formas de generar:</strong></p>
-                            <p>⚡ <strong>MindFlow (Local)</strong>: Rápido, sin internet</p>
-                            <p>✨ <strong>Generar con IA</strong>: Más inteligente, requiere API key</p>
-                            <br>
-                            <p><small>💡 Tip: Enter = Local | Shift+Enter = IA</small></p>
-                        `,
-                        background: '#1e1b4b',
-                        color: '#f8fafc',
-                        confirmButtonText: '¡Entendido!',
-                        confirmButtonColor: '#6366f1'
-                    });
-                }
-            }, 1000);
+                });
+                
+                console.log('MindFlow iniciado correctamente');
+            } catch (error) {
+                console.error('Error al inicializar MindFlow:', error);
+                alert('Error al inicializar la aplicación. Por favor, recarga la página.');
+            }
         };
     </script>
 </body>

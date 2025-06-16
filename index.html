@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindFlow - Generador de Mapas Mentales</title>
+    
+    <!-- Librerías -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #818cf8;
+            --accent: #c084fc;
+            --dark: #1e1b4b;
+            --light: #f8fafc;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f23;
+            color: var(--light);
+            overflow-x: hidden;
+        }
+        
+        /* Fondo animado */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f0f23, #1a1a3e);
+            overflow: hidden;
+        }
+        
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: pulse 20s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+        }
+        
+        /* Header */
+        .header {
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+        
+        .header p {
+            color: #a5b4fc;
+            font-size: 1.2rem;
+        }
+        
+        /* Controles principales */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem auto;
+            max-width: 800px;
+            padding: 0 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .input-container {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+        
+        #promptInput {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--light);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        #promptInput:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        #promptInput::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        /* Opciones de visualización */
+        .options {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1rem auto;
+            padding: 0 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .option-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .option-group label {
+            font-size: 0.9rem;
+            color: #a5b4fc;
+        }
+        
+        select, input[type="color"] {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        
+        select option {
+            background: var(--dark);
+        }
+        
+        /* Container del mapa mental */
+        #mindmap {
+            width: calc(100% - 4rem);
+            height: 600px;
+            margin: 2rem auto;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #mindmap::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        /* Mensaje de canvas vacío */
+        #mindmap::after {
+            content: 'Ingresa un tema y genera tu mapa mental';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(165, 180, 252, 0.3);
+            font-size: 1.2rem;
+            text-align: center;
+            pointer-events: none;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        #mindmap.has-content::after {
+            opacity: 0;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Botones de acción */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem auto;
+            flex-wrap: wrap;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .btn-ai {
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(245, 158, 11, 0.6);
+        }
+        
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        /* Indicador de modo */
+        .mode-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #a5b4fc;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .mode-indicator.show {
+            display: block;
+        }
+        
+        .mode-indicator.ai-mode {
+            border-color: #f59e0b;
+            color: #fbbf24;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        .vis-tooltip {
+            background: rgba(30, 27, 75, 0.95) !important;
+            border: 1px solid var(--primary) !important;
+            border-radius: 10px !important;
+            color: white !important;
+            font-family: inherit !important;
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* Animación de carga */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2rem; }
+            #mindmap { height: 400px; width: calc(100% - 2rem); }
+            .controls { padding: 0 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="header">
+        <h1>MindFlow</h1>
+        <p>Transforma tus ideas en mapas mentales interactivos</p>
+    </div>
+    
+    <div class="controls">
+        <div class="input-container">
+            <input type="text" id="promptInput" placeholder="Ingresa tu idea central (ej: Energía y tipos de energía)">
+        </div>
+        <button class="btn btn-primary" onclick="generateMindMap(false)">
+            ⚡ MindFlow (Local)
+        </button>
+        <button class="btn btn-ai" onclick="generateMindMap(true)">
+            ✨ Generar con IA
+        </button>
+    </div>
+    
+    <div class="options">
+        <div class="option-group">
+            <label>Tema:</label>
+            <select id="themeSelect" onchange="updateTheme()">
+                <option value="cosmic">Cósmico</option>
+                <option value="nature">Natural</option>
+                <option value="tech">Tecnológico</option>
+                <option value="minimal">Minimalista</option>
+            </select>
+        </div>
+        <div class="option-group">
+            <label>Disposición:</label>
+            <select id="layoutSelect" onchange="updateLayout()">
+                <option value="hierarchical">Jerárquico</option>
+                <option value="radial">Radial</option>
+                <option value="random">Aleatorio</option>
+            </select>
+        </div>
+        <div class="option-group">
+            <label>Color principal:</label>
+            <input type="color" id="colorPicker" value="#6366f1" onchange="updateColors()">
+        </div>
+    </div>
+    
+    <div id="mindmap"></div>
+    
+    <div class="action-buttons">
+        <button class="btn btn-secondary" onclick="addNode()">➕ Añadir Nodo</button>
+        <button class="btn btn-secondary" onclick="exportPNG()">📷 Exportar PNG</button>
+        <button class="btn btn-secondary" onclick="exportSVG()">📄 Exportar SVG</button>
+        <button class="btn btn-secondary" onclick="resetMap()">🔄 Reiniciar</button>
+    </div>
+    
+    <div class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="mode-indicator" id="modeIndicator"></div>
+    
+    <script>
+        let network = null;
+        let nodes = null;
+        let edges = null;
+        let nodeIdCounter = 0;
+        
+        // Temas predefinidos
+        const themes = {
+            cosmic: {
+                node: { background: '#6366f1', border: '#818cf8', font: '#ffffff' },
+                edge: { color: '#818cf8', highlight: '#c084fc' }
+            },
+            nature: {
+                node: { background: '#10b981', border: '#34d399', font: '#ffffff' },
+                edge: { color: '#34d399', highlight: '#6ee7b7' }
+            },
+            tech: {
+                node: { background: '#f59e0b', border: '#fbbf24', font: '#1f2937' },
+                edge: { color: '#fbbf24', highlight: '#fde68a' }
+            },
+            minimal: {
+                node: { background: '#e5e7eb', border: '#9ca3af', font: '#1f2937' },
+                edge: { color: '#9ca3af', highlight: '#6b7280' }
+            }
+        };
+        
+        let currentTheme = themes.cosmic;
+        
+        // Inicializar el mapa mental vacío
+        function initNetwork() {
+            const container = document.getElementById('mindmap');
+            const data = { nodes: new vis.DataSet(), edges: new vis.DataSet() };
+            
+            const options = {
+                nodes: {
+                    shape: 'box',
+                    borderWidth: 2,
+                    borderWidthSelected: 3,
+                    font: {
+                        size: 16,
+                        face: 'Segoe UI, Arial, sans-serif'
+                    },
+                    shadow: {
+                        enabled: true,
+                        size: 10,
+                        x: 5,
+                        y: 5
+                    },
+                    chosen: {
+                        node: function(values, id, selected, hovering) {
+                            values.size = 30;
+                            values.shadow = {
+                                enabled: true,
+                                size: 20,
+                                x: 5,
+                                y: 5
+                            };
+                        }
+                    }
+                },
+                edges: {
+                    width: 2,
+                    smooth: {
+                        type: 'curvedCW',
+                        roundness: 0.2
+                    },
+                    arrows: {
+                        to: {
+                            enabled: true,
+                            scaleFactor: 0.5
+                        }
+                    },
+                    shadow: true,
+                    chosen: {
+                        edge: function(values, id, selected, hovering) {
+                            values.width = 4;
+                        }
+                    }
+                },
+                layout: {
+                    hierarchical: {
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        nodeSpacing: 150,
+                        levelSeparation: 150
+                    }
+                },
+                physics: {
+                    enabled: true,
+                    hierarchicalRepulsion: {
+                        nodeDistance: 150
+                    }
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 200,
+                    hideEdgesOnDrag: true
+                }
+            };
+            
+            network = new vis.Network(container, data, options);
+            nodes = data.nodes;
+            edges = data.edges;
+            
+            // Eventos interactivos
+            network.on('doubleClick', function(params) {
+                if (params.nodes.length > 0) {
+                    editNode(params.nodes[0]);
+                }
+            });
+        }
+        
+        // Función de alerta alternativa
+        function showAlert(options) {
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire(options);
+            } else {
+                // Fallback a alert nativo
+                if (options.icon === 'warning' || options.icon === 'error') {
+                    alert('⚠️ ' + options.title + '\n\n' + options.text);
+                } else {
+                    alert(options.title + '\n\n' + (options.text || options.html || ''));
+                }
+            }
+        }
+        
+        // Configuración de Gemini AI Studio
+        const GEMINI_API_KEY = 'AIzaSyDci7nFs9-JFtdFiRpbkffFes5JicHRqB4'; // Reemplaza con tu API key de Gemini
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+        
+        // Generar mapa mental basado en el prompt
+        async function generateMindMap() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            if (!prompt) {
+                showAlert({
+                    icon: 'warning',
+                    title: 'Campo vacío',
+                    text: 'Por favor, ingresa una idea o tema para generar el mapa mental',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                });
+                return;
+            }
+            
+            // Limpiar mapa anterior
+            nodes.clear();
+            edges.clear();
+            nodeIdCounter = 0;
+            
+            // Mostrar loading
+            document.querySelector('.loading').style.display = 'block';
+            
+            try {
+                // Intentar generar con Gemini AI
+                const mindMapData = await generateWithGemini(prompt);
+                if (mindMapData) {
+                    createMindMapFromAI(mindMapData);
+                } else {
+                    // Fallback a generación local
+                    generateExampleMap(prompt);
+                }
+            } catch (error) {
+                console.error('Error con Gemini:', error);
+                // Fallback a generación local
+                generateExampleMap(prompt);
+            }
+            
+            // Marcar que hay contenido
+            document.getElementById('mindmap').classList.add('has-content');
+            
+            document.querySelector('.loading').style.display = 'none';
+            
+            // Animación de entrada
+            network.fit({
+                animation: {
+                    duration: 1000,
+                    easingFunction: 'easeInOutQuad'
+                }
+            });
+        }
+        
+        // Generar mapa mental usando Gemini AI
+        async function generateWithGemini(topic) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === 'AIzaSyDci7nFs9-JFtdFiRpbkffFes5JicHRqB4') {
+                console.log('API Key no configurada, usando generación local');
+                showAlert({
+                    icon: 'warning',
+                    title: 'API Key no configurada',
+                    text: 'Por favor, configura tu API key de Gemini para usar la generación con IA',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                });
+                return null;
+            }
+            
+            const prompt = `Eres un experto en crear mapas mentales. Genera un mapa mental estructurado sobre: "${topic}".
+            
+            Responde ÚNICAMENTE con un JSON válido (sin markdown, sin explicaciones) en este formato exacto:
+            {
+                "central": "Tema Central",
+                "branches": [
+                    {
+                        "concept": "Concepto Principal 1",
+                        "subconcepts": ["Subconcepto 1", "Subconcepto 2", "Subconcepto 3"]
+                    },
+                    {
+                        "concept": "Concepto Principal 2",
+                        "subconcepts": ["Subconcepto 1", "Subconcepto 2"]
+                    }
+                ]
+            }
+            
+            Requisitos:
+            - Genera entre 4-6 ramas principales
+            - Cada rama debe tener 2-4 subconceptos
+            - Los conceptos deben ser concisos y relevantes
+            - Usa el mismo idioma que el tema proporcionado`;
+            
+            try {
+                console.log('Llamando a Gemini AI...');
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 1024,
+                        },
+                        safetySettings: [
+                            {
+                                category: "HARM_CATEGORY_HARASSMENT",
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_HATE_SPEECH",
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                                threshold: "BLOCK_NONE"
+                            },
+                            {
+                                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                                threshold: "BLOCK_NONE"
+                            }
+                        ]
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => null);
+                    const errorMessage = errorData?.error?.message || `Error HTTP: ${response.status}`;
+                    console.error('Error de API:', errorMessage);
+                    
+                    // Mostrar error específico al usuario
+                    if (response.status === 400) {
+                        showAlert({
+                            icon: 'error',
+                            title: 'Error de API',
+                            text: 'La API key parece ser inválida. Verifica que sea correcta.',
+                            background: '#1e1b4b',
+                            color: '#f8fafc'
+                        });
+                    } else if (response.status === 429) {
+                        showAlert({
+                            icon: 'warning',
+                            title: 'Límite excedido',
+                            text: 'Has excedido el límite de solicitudes. Intenta más tarde.',
+                            background: '#1e1b4b',
+                            color: '#f8fafc'
+                        });
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                console.log('Respuesta de Gemini:', data);
+                
+                // Verificar que haya contenido en la respuesta
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error('Respuesta vacía de Gemini');
+                }
+                
+                // Extraer el texto de la respuesta de Gemini
+                const generatedText = data.candidates[0].content.parts[0].text;
+                console.log('Texto generado:', generatedText);
+                
+                // Limpiar el texto (remover markdown si existe)
+                const cleanedText = generatedText
+                    .replace(/```json\n?/g, '')
+                    .replace(/```\n?/g, '')
+                    .replace(/^\s*```\s*$/gm, '')
+                    .trim();
+                
+                console.log('Texto limpio:', cleanedText);
+                
+                // Parsear el JSON
+                const mindMapData = JSON.parse(cleanedText);
+                console.log('Mapa mental parseado:', mindMapData);
+                
+                // Validar estructura
+                if (!mindMapData.central || !mindMapData.branches || !Array.isArray(mindMapData.branches)) {
+                    throw new Error('Estructura de mapa mental inválida');
+                }
+                
+                return mindMapData;
+                
+            } catch (error) {
+                console.error('Error detallado al llamar a Gemini AI:', error);
+                
+                // Mostrar error al usuario con más detalles
+                let errorMessage = 'No se pudo generar con Gemini AI. Usando generación local.';
+                
+                if (error.message.includes('API key')) {
+                    errorMessage = 'Problema con la API key. Verifica que sea válida.';
+                } else if (error.message.includes('JSON')) {
+                    errorMessage = 'Error al procesar la respuesta de la IA.';
+                }
+                
+                showAlert({
+                    icon: 'info',
+                    title: 'Generación con IA',
+                    text: errorMessage,
+                    background: '#1e1b4b',
+                    color: '#f8fafc',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                return null;
+            }
+        }
+        
+        // Crear mapa mental desde respuesta de AI
+        function createMindMapFromAI(data) {
+            const theme = currentTheme;
+            
+            // Nodo central
+            const centralId = nodeIdCounter++;
+            nodes.add({
+                id: centralId,
+                label: data.central,
+                level: 0,
+                color: {
+                    background: theme.node.background,
+                    border: theme.node.border
+                },
+                font: { color: theme.node.font, size: 20 },
+                size: 35
+            });
+            
+            // Crear ramas y subramas
+            data.branches.forEach((branch, index) => {
+                const branchId = nodeIdCounter++;
+                
+                // Nodo de rama principal
+                nodes.add({
+                    id: branchId,
+                    label: branch.concept,
+                    level: 1,
+                    color: {
+                        background: theme.node.background + 'dd',
+                        border: theme.node.border
+                    },
+                    font: { color: theme.node.font }
+                });
+                
+                edges.add({
+                    from: centralId,
+                    to: branchId,
+                    color: { color: theme.edge.color, highlight: theme.edge.highlight }
+                });
+                
+                // Subconceptos
+                branch.subconcepts.forEach((subconcept, subIndex) => {
+                    const subId = nodeIdCounter++;
+                    nodes.add({
+                        id: subId,
+                        label: subconcept,
+                        level: 2,
+                        color: {
+                            background: theme.node.background + 'aa',
+                            border: theme.node.border
+                        },
+                        font: { color: theme.node.font, size: 14 }
+                    });
+                    
+                    edges.add({
+                        from: branchId,
+                        to: subId,
+                        color: { color: theme.edge.color + 'aa', highlight: theme.edge.highlight }
+                    });
+                });
+            });
+        }
+        
+        // Generar un mapa de ejemplo basado en el prompt
+        function generateExampleMap(prompt) {
+            const centralId = nodeIdCounter++;
+            const theme = currentTheme;
+            
+            // Nodo central
+            nodes.add({
+                id: centralId,
+                label: prompt,
+                level: 0,
+                color: {
+                    background: theme.node.background,
+                    border: theme.node.border
+                },
+                font: { color: theme.node.font, size: 20 },
+                size: 35
+            });
+            
+            // Generar nodos secundarios basados en palabras clave
+            const concepts = generateConcepts(prompt);
+            
+            concepts.forEach((concept, index) => {
+                const nodeId = nodeIdCounter++;
+                nodes.add({
+                    id: nodeId,
+                    label: concept,
+                    level: 1,
+                    color: {
+                        background: theme.node.background + 'dd',
+                        border: theme.node.border
+                    },
+                    font: { color: theme.node.font }
+                });
+                
+                edges.add({
+                    from: centralId,
+                    to: nodeId,
+                    color: { color: theme.edge.color, highlight: theme.edge.highlight }
+                });
+                
+                // Generar subnodos
+                const subconcepts = generateSubconcepts(concept);
+                subconcepts.forEach((sub, subIndex) => {
+                    const subNodeId = nodeIdCounter++;
+                    nodes.add({
+                        id: subNodeId,
+                        label: sub,
+                        level: 2,
+                        color: {
+                            background: theme.node.background + 'aa',
+                            border: theme.node.border
+                        },
+                        font: { color: theme.node.font, size: 14 }
+                    });
+                    
+                    edges.add({
+                        from: nodeId,
+                        to: subNodeId,
+                        color: { color: theme.edge.color + 'aa', highlight: theme.edge.highlight }
+                    });
+                });
+            });
+        }
+        
+        // Generar conceptos basados en el prompt
+        function generateConcepts(prompt) {
+            const lowerPrompt = prompt.toLowerCase();
+            
+            // Base de conocimiento simple para generar conceptos relevantes
+            if (lowerPrompt.includes('energía')) {
+                return ['Energía Cinética', 'Energía Potencial', 'Energía Térmica', 'Energía Eléctrica', 'Energía Nuclear'];
+            } else if (lowerPrompt.includes('programación')) {
+                return ['Variables', 'Funciones', 'Bucles', 'Condicionales', 'Estructuras de Datos'];
+            } else if (lowerPrompt.includes('marketing')) {
+                return ['Segmentación', 'Posicionamiento', 'Marketing Mix', 'Análisis FODA', 'Marketing Digital'];
+            } else if (lowerPrompt.includes('biología')) {
+                return ['Células', 'Genética', 'Evolución', 'Ecosistemas', 'Anatomía'];
+            } else {
+                // Genérico
+                return ['Definición', 'Características', 'Tipos', 'Aplicaciones', 'Ejemplos'];
+            }
+        }
+        
+        // Generar subconceptos
+        function generateSubconcepts(concept) {
+            const lowerConcept = concept.toLowerCase();
+            
+            if (lowerConcept.includes('cinética')) {
+                return ['Movimiento', 'Velocidad', 'Fórmula: ½mv²'];
+            } else if (lowerConcept.includes('potencial')) {
+                return ['Gravedad', 'Altura', 'Fórmula: mgh'];
+            } else if (lowerConcept.includes('variables')) {
+                return ['Tipos de datos', 'Declaración', 'Alcance'];
+            } else if (lowerConcept.includes('funciones')) {
+                return ['Parámetros', 'Retorno', 'Recursividad'];
+            } else {
+                return ['Ejemplo 1', 'Ejemplo 2'];
+            }
+        }
+        
+        // Actualizar tema
+        function updateTheme() {
+            const themeSelect = document.getElementById('themeSelect').value;
+            currentTheme = themes[themeSelect];
+            
+            // Actualizar colores de todos los nodos
+            const allNodes = nodes.get();
+            allNodes.forEach(node => {
+                const level = node.level || 0;
+                const opacity = level === 0 ? '' : (level === 1 ? 'dd' : 'aa');
+                nodes.update({
+                    id: node.id,
+                    color: {
+                        background: currentTheme.node.background + opacity,
+                        border: currentTheme.node.border
+                    },
+                    font: { color: currentTheme.node.font }
+                });
+            });
+            
+            // Actualizar colores de todas las aristas
+            const allEdges = edges.get();
+            allEdges.forEach(edge => {
+                edges.update({
+                    id: edge.id,
+                    color: { 
+                        color: currentTheme.edge.color, 
+                        highlight: currentTheme.edge.highlight 
+                    }
+                });
+            });
+        }
+        
+        // Actualizar disposición
+        function updateLayout() {
+            const layout = document.getElementById('layoutSelect').value;
+            let options = {};
+            
+            switch(layout) {
+                case 'hierarchical':
+                    options = {
+                        layout: {
+                            hierarchical: {
+                                enabled: true,
+                                direction: 'UD',
+                                sortMethod: 'directed'
+                            }
+                        }
+                    };
+                    break;
+                case 'radial':
+                    options = {
+                        layout: {
+                            hierarchical: {
+                                enabled: false
+                            }
+                        },
+                        physics: {
+                            solver: 'forceAtlas2Based'
+                        }
+                    };
+                    break;
+                case 'random':
+                    options = {
+                        layout: {
+                            hierarchical: {
+                                enabled: false
+                            },
+                            randomSeed: Math.floor(Math.random() * 1000)
+                        }
+                    };
+                    break;
+            }
+            
+            network.setOptions(options);
+        }
+        
+        // Actualizar colores personalizados
+        function updateColors() {
+            const color = document.getElementById('colorPicker').value;
+            currentTheme.node.background = color;
+            updateTheme();
+        }
+        
+        // Añadir nuevo nodo
+        async function addNode() {
+            if (typeof Swal !== 'undefined') {
+                const { value: formValues } = await Swal.fire({
+                    title: 'Añadir nuevo nodo',
+                    html:
+                        '<input id="swal-input1" class="swal2-input" placeholder="Texto del nodo">' +
+                        '<input id="swal-input2" class="swal2-input" placeholder="ID del nodo padre (opcional)">',
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Añadir',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc',
+                    preConfirm: () => {
+                        return [
+                            document.getElementById('swal-input1').value,
+                            document.getElementById('swal-input2').value
+                        ]
+                    }
+                });
+                
+                if (formValues && formValues[0]) {
+                    const newNodeId = nodeIdCounter++;
+                    const parentId = formValues[1] ? parseInt(formValues[1]) : null;
+                    
+                    nodes.add({
+                        id: newNodeId,
+                        label: formValues[0],
+                        color: {
+                            background: currentTheme.node.background,
+                            border: currentTheme.node.border
+                        },
+                        font: { color: currentTheme.node.font }
+                    });
+                    
+                    if (parentId && nodes.get(parentId)) {
+                        edges.add({
+                            from: parentId,
+                            to: newNodeId,
+                            color: { 
+                                color: currentTheme.edge.color, 
+                                highlight: currentTheme.edge.highlight 
+                            }
+                        });
+                    }
+                    
+                    network.fit();
+                }
+            } else {
+                // Fallback simple
+                const nodeText = prompt('Texto del nuevo nodo:');
+                if (nodeText) {
+                    const newNodeId = nodeIdCounter++;
+                    nodes.add({
+                        id: newNodeId,
+                        label: nodeText,
+                        color: {
+                            background: currentTheme.node.background,
+                            border: currentTheme.node.border
+                        },
+                        font: { color: currentTheme.node.font }
+                    });
+                    network.fit();
+                }
+            }
+        }
+        
+        // Editar nodo
+        async function editNode(nodeId) {
+            const node = nodes.get(nodeId);
+            if (typeof Swal !== 'undefined') {
+                const { value: newLabel } = await Swal.fire({
+                    title: 'Editar nodo',
+                    input: 'text',
+                    inputValue: node.label,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                });
+                
+                if (newLabel) {
+                    nodes.update({ id: nodeId, label: newLabel });
+                }
+            } else {
+                const newLabel = prompt('Nuevo texto para el nodo:', node.label);
+                if (newLabel) {
+                    nodes.update({ id: nodeId, label: newLabel });
+                }
+            }
+        }
+        
+        // Exportar a PNG
+        function exportPNG() {
+            const container = document.getElementById('mindmap');
+            html2canvas(container, {
+                backgroundColor: '#0f0f23',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'mindmap.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+        
+        // Exportar a SVG
+        function exportSVG() {
+            // Esta es una implementación simplificada
+            showAlert({
+                icon: 'info',
+                title: 'Exportar SVG',
+                text: 'La exportación SVG requiere una implementación más compleja. Por ahora, usa la exportación PNG.',
+                background: '#1e1b4b',
+                color: '#f8fafc'
+            });
+        }
+        
+        // Reiniciar mapa
+        function resetMap() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¿Reiniciar mapa?',
+                    text: 'Se perderán todos los cambios actuales',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, reiniciar',
+                    cancelButtonText: 'Cancelar',
+                    background: '#1e1b4b',
+                    color: '#f8fafc'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Limpiar datos
+                        nodes.clear();
+                        edges.clear();
+                        nodeIdCounter = 0;
+                        document.getElementById('promptInput').value = '';
+                        
+                        // Quitar la marca de contenido
+                        document.getElementById('mindmap').classList.remove('has-content');
+                        
+                        // Reinicializar la red para mostrar el canvas vacío
+                        network.redraw();
+                        network.fit();
+                        
+                        // Mostrar mensaje de confirmación
+                        showAlert({
+                            icon: 'success',
+                            title: 'Mapa reiniciado',
+                            text: 'Puedes comenzar un nuevo mapa mental',
+                            background: '#1e1b4b',
+                            color: '#f8fafc',
+                            timer: 2000,
+                            showConfirmButton: false,
+                            position: 'top-end',
+                            toast: true
+                        });
+                        
+                        // Enfocar el input para facilitar el siguiente uso
+                        document.getElementById('promptInput').focus();
+                    }
+                });
+            } else {
+                if (confirm('¿Reiniciar mapa? Se perderán todos los cambios actuales')) {
+                    // Limpiar datos
+                    nodes.clear();
+                    edges.clear();
+                    nodeIdCounter = 0;
+                    document.getElementById('promptInput').value = '';
+                    
+                    // Quitar la marca de contenido
+                    document.getElementById('mindmap').classList.remove('has-content');
+                    
+                    // Reinicializar la red
+                    network.redraw();
+                    network.fit();
+                    
+                    // Enfocar el input
+                    document.getElementById('promptInput').focus();
+                }
+            }
+        }
+        
+        // Inicializar la aplicación
+        window.onload = function() {
+            // Verificar que las librerías estén cargadas
+            if (typeof vis === 'undefined') {
+                console.error('vis-network no está cargado');
+                alert('Error: No se pudo cargar la librería de visualización. Por favor, recarga la página.');
+                return;
+            }
+            
+            initNetwork();
+            
+            // Permitir generar con Enter (modo local por defecto)
+            document.getElementById('promptInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    if (e.shiftKey) {
+                        generateMindMap(true); // Shift+Enter para IA
+                    } else {
+                        generateMindMap(false); // Enter para local
+                    }
+                }
+            });
+            
+            // Mostrar tooltip de ayuda después de que todo esté cargado
+            setTimeout(() => {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '💡 Consejo',
+                        html: `
+                            <p><strong>Dos formas de generar:</strong></p>
+                            <p>⚡ <strong>MindFlow (Local)</strong>: Rápido, sin internet</p>
+                            <p>✨ <strong>Generar con IA</strong>: Más inteligente, requiere API key</p>
+                            <br>
+                            <p><small>💡 Tip: Enter = Local | Shift+Enter = IA</small></p>
+                        `,
+                        background: '#1e1b4b',
+                        color: '#f8fafc',
+                        confirmButtonText: '¡Entendido!',
+                        confirmButtonColor: '#6366f1'
+                    });
+                }
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

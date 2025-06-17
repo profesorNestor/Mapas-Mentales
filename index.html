@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindFlow - Generador de Mapas Mentales</title>
+    <title>MindFlow Pro - Generador de Mapas Mentales con IA</title>
     
-    <!-- Librerías -->
+    <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.1/sweetalert2.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        /* Estilos Generales y Variables CSS */
         :root {
             --primary: #6366f1;
             --secondary: #818cf8;
@@ -24,10 +20,13 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --info: #3b82f6;
             --dark: #1e1b4b;
             --light: #f8fafc;
             --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -36,7 +35,7 @@
             overflow-x: hidden;
         }
         
-        /* Fondo animado */
+        /* Fondo animado para un look dinámico */
         .bg-animation {
             position: fixed;
             width: 100%;
@@ -45,29 +44,28 @@
             background: linear-gradient(45deg, #0f0f23, #1a1a3e);
             overflow: hidden;
         }
-        
         .bg-animation::before {
             content: '';
             position: absolute;
             width: 200%;
             height: 200%;
+            top: 50%;
+            left: 50%;
             background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
             animation: pulse 20s ease-in-out infinite;
         }
-        
         @keyframes pulse {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.2); }
         }
         
-        /* Header */
+        /* Header y Título */
         .header {
-            padding: 2rem;
+            padding: 1.5rem 2rem;
             text-align: center;
             position: relative;
             z-index: 10;
         }
-        
         .header h1 {
             font-size: 3rem;
             background: var(--gradient);
@@ -77,34 +75,23 @@
             margin-bottom: 0.5rem;
             animation: glow 3s ease-in-out infinite;
         }
-        
         @keyframes glow {
             0%, 100% { filter: brightness(1); }
             50% { filter: brightness(1.2); }
         }
+        .header p { color: #a5b4fc; font-size: 1.2rem; }
         
-        .header p {
-            color: #a5b4fc;
-            font-size: 1.2rem;
-        }
-        
-        /* Controles principales */
+        /* Controles Principales (Input y botón de generar) */
         .controls {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin: 2rem auto;
+            margin: 1rem auto;
             max-width: 600px;
             padding: 0 2rem;
             flex-wrap: wrap;
         }
-        
-        .input-container {
-            flex: 1;
-            min-width: 300px;
-            position: relative;
-        }
-        
+        .input-container { flex: 1; min-width: 300px; position: relative; }
         #promptInput {
             width: 100%;
             padding: 1rem 1.5rem;
@@ -116,18 +103,15 @@
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
         }
-        
         #promptInput:focus {
             outline: none;
             border-color: var(--primary);
             background: rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
         }
+        #promptInput::placeholder { color: rgba(255, 255, 255, 0.5); }
         
-        #promptInput::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
+        /* Estilos de Botones */
         .btn {
             padding: 1rem 2rem;
             border: none;
@@ -140,93 +124,34 @@
             overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-primary {
-            background: var(--gradient);
-            color: white;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--light);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .btn-success {
-            background: var(--success);
-            color: white;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
-        }
-        
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
-        }
-        
-        /* Opciones de visualización */
-        .options {
-            display: flex;
-            gap: 1rem;
             justify-content: center;
-            margin: 1rem auto;
-            padding: 0 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .option-group {
-            display: flex;
             gap: 0.5rem;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            backdrop-filter: blur(10px);
         }
-        
-        .option-group label {
-            font-size: 0.9rem;
-            color: #a5b4fc;
+        .btn:hover {
+            transform: translateY(-2px);
         }
-        
-        select, input[type="color"] {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-        
-        select option {
-            background: var(--dark);
-        }
-        
-        /* Container del mapa mental */
+        .btn-primary { background: var(--gradient); color: white; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4); }
+        .btn-primary:hover { box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: var(--light); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4); }
+        .btn-warning { background: var(--warning); color: white; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4); }
+        .btn-danger { background: var(--danger); color: white; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4); }
+        .btn-info { background: var(--info); color: white; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4); }
+        .btn.small-btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
+
+        /* Opciones de Visualización */
+        .options { display: flex; gap: 1rem; justify-content: center; margin: 1rem auto; padding: 0 2rem; flex-wrap: wrap; }
+        .option-group { display: flex; gap: 0.5rem; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 25px; backdrop-filter: blur(10px); }
+        .option-group label { font-size: 0.9rem; color: #a5b4fc; }
+        select, input[type="color"] { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; cursor: pointer; }
+        select option { background: var(--dark); }
+
+        /* Contenedor del Mapa Mental */
         #mindmap {
             width: calc(100% - 4rem);
-            height: 600px;
-            margin: 2rem auto;
+            height: 60vh;
+            margin: 1.5rem auto;
             border-radius: 20px;
             background: rgba(255, 255, 255, 0.02);
             backdrop-filter: blur(10px);
@@ -235,159 +160,123 @@
             position: relative;
             overflow: hidden;
         }
-        
-        #mindmap::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
-            animation: rotate 30s linear infinite;
-        }
-        
-        /* Mensaje de canvas vacío */
         #mindmap::after {
             content: 'Ingresa un tema y genera tu mapa mental\n\n💡 Tip: Doble clic para editar nodos\n🖱️ Clic derecho para más opciones';
-            position: absolute;
-            top: 50%;
-            left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             color: rgba(165, 180, 252, 0.3);
-            font-size: 1.2rem;
-            text-align: center;
-            pointer-events: none;
-            opacity: 1;
-            transition: opacity 0.3s ease;
-            white-space: pre-line;
-            line-height: 1.6;
+            font-size: 1.2rem; text-align: center;
+            pointer-events: none; opacity: 1; transition: opacity 0.3s ease;
+            white-space: pre-line; line-height: 1.6; z-index: 1;
         }
-        
-        #mindmap.has-content::after {
-            opacity: 0;
-        }
-        
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Botones de acción */
+        #mindmap.has-content::after { opacity: 0; }
+        #mindmap:not(.has-content) .vis-network { display: none; }
+
+        /* Botones de Acción Debajo del Mapa */
         .action-buttons {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin: 2rem auto;
+            margin: 1.5rem auto;
             flex-wrap: wrap;
         }
         
-        /* Menú contextual */
+        /* Menú Contextual (Clic Derecho) */
         .context-menu {
-            position: fixed;
-            background: rgba(30, 27, 75, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--primary);
-            border-radius: 10px;
-            padding: 0.5rem 0;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: fixed; background: rgba(30, 27, 75, 0.95);
+            backdrop-filter: blur(10px); border: 1px solid var(--primary);
+            border-radius: 10px; padding: 0.5rem 0; z-index: 1000;
+            display: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            width: 200px;
         }
-        
         .context-menu-item {
-            padding: 0.7rem 1rem;
-            cursor: pointer;
-            color: var(--light);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background 0.2s ease;
+            padding: 0.7rem 1.2rem; cursor: pointer; color: var(--light);
+            display: flex; align-items: center; gap: 0.75rem;
+            transition: background 0.2s ease; font-size: 0.9rem;
         }
-        
-        .context-menu-item:hover {
-            background: rgba(99, 102, 241, 0.2);
-        }
-        
-        .context-menu-item.danger:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-        }
-        
-        /* Indicador de selección */
+        .context-menu-item:hover { background: rgba(99, 102, 241, 0.2); }
+        .context-menu-item.danger:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+        /* Indicador de Selección */
         .selection-indicator {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            color: #a5b4fc;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: none;
-            animation: slideIn 0.5s ease-out;
+            position: fixed; bottom: 20px; left: 20px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;
+            color: #a5b4fc; border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none; animation: slideIn 0.5s ease-out; z-index: 999;
         }
+        .selection-indicator.show { display: block; }
         
-        .selection-indicator.show {
-            display: block;
-        }
-        
-        /* Animación de carga */
+        /* Indicador de Carga (Spinner) */
         .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
+            display: none; align-items: center; justify-content: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 15, 35, 0.7); backdrop-filter: blur(5px);
+            z-index: 2000;
         }
-        
         .loading-spinner {
-            width: 60px;
-            height: 60px;
+            width: 60px; height: 60px;
             border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--primary);
-            border-radius: 50%;
+            border-top-color: var(--primary); border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideIn {
-            from {
-                transform: translateX(-100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(-100px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        
-        /* Responsive */
+
+        /* Input de archivo oculto para importación */
+        #importFileInput { display: none; }
+
+        /* Estilos para el modal de ayuda */
+        .help-content {
+            text-align: left;
+            padding: 0 1rem;
+        }
+        .help-content h2 {
+            color: var(--accent);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--secondary);
+            padding-bottom: 0.3rem;
+        }
+        .help-content ul {
+            list-style-position: inside;
+            padding-left: 0.5rem;
+        }
+        .help-content li {
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .help-content code {
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .header h1 { font-size: 2rem; }
-            #mindmap { height: 400px; width: calc(100% - 2rem); }
-            .controls { padding: 0 1rem; }
-            .action-buttons { padding: 0 1rem; }
+            .header h1 { font-size: 2.2rem; }
+            #mindmap { height: 55vh; width: calc(100% - 2rem); }
+            .controls, .options, .action-buttons { padding: 0 1rem; }
+            .btn { padding: 0.8rem 1.5rem; font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
     <div class="bg-animation"></div>
     
-    <div class="header">
-        <h1>MindFlow</h1>
-        <p>Transforma tus ideas en mapas mentales interactivos</p>
-    </div>
+    <header class="header">
+        <h1>MindFlow Pro</h1>
+        <p>Transforma tus ideas en mapas mentales interactivos con IA</p>
+    </header>
     
     <div class="controls">
         <div class="input-container">
-            <input type="text" id="promptInput" placeholder="Ingresa tu idea central (ej: Energía y tipos de energía)">
+            <input type="text" id="promptInput" placeholder="Ingresa tu idea central (ej: La célula y sus partes)">
         </div>
         <button class="btn btn-primary" onclick="generateMindMap()">
             ⚡ Generar MindFlow
@@ -409,11 +298,10 @@
             <select id="layoutSelect" onchange="updateLayout()">
                 <option value="hierarchical">Jerárquico</option>
                 <option value="radial">Radial</option>
-                <option value="random">Aleatorio</option>
             </select>
         </div>
         <div class="option-group">
-            <label>Color principal:</label>
+            <label>Color Ppal:</label>
             <input type="color" id="colorPicker" value="#6366f1" onchange="updateColors()">
         </div>
     </div>
@@ -421,980 +309,638 @@
     <div id="mindmap"></div>
     
     <div class="action-buttons">
-        <button class="btn btn-success" onclick="addNode()">➕ Añadir Nodo</button>
-        <button class="btn btn-warning" onclick="addConnection()">🔗 Conectar Nodos</button>
-        <button class="btn btn-secondary" onclick="exportPNG()">📷 Exportar PNG</button>
-        <button class="btn btn-secondary" onclick="togglePhysics()">⚡ Física ON/OFF</button>
-        <button class="btn btn-danger" onclick="resetMap()">🔄 Reiniciar</button>
+        <button class="btn btn-secondary small-btn" onclick="document.getElementById('importFileInput').click()">📂 Importar JSON</button>
+        <button class="btn btn-secondary small-btn" onclick="exportJSON()">💾 Exportar JSON</button>
+        <button class="btn btn-secondary small-btn" onclick="exportPNG()">📷 Exportar PNG</button>
+        <button class="btn btn-info small-btn" onclick="togglePhysics()">⚛️ Física ON/OFF</button>
+        <button class="btn btn-danger small-btn" onclick="resetMap()">🔄 Reiniciar</button>
+        <button class="btn btn-warning small-btn" onclick="showHelpModal()">❓ Ayuda</button>
     </div>
     
-    <!-- Menú contextual -->
+    <!-- Menú contextual (inicialmente oculto) -->
     <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item" onclick="editSelectedNode()">
-            ✏️ Editar
-        </div>
-        <div class="context-menu-item" onclick="addChildNode()">
-            ➕ Añadir hijo
-        </div>
-        <div class="context-menu-item" onclick="duplicateNode()">
-            📋 Duplicar
-        </div>
-        <div class="context-menu-item" onclick="changeNodeColor()">
-            🎨 Cambiar color
-        </div>
-        <div class="context-menu-item danger" onclick="deleteSelectedNode()">
-            🗑️ Eliminar
-        </div>
+        <div class="context-menu-item" onclick="editSelectedNode()">✏️ Editar Nodo</div>
+        <div class="context-menu-item" onclick="addChildNode()">➕ Añadir Hijo</div>
+        <div class="context-menu-item" onclick="expandNodeWithAI()">🧠 Expandir con IA</div>
+        <div class="context-menu-item" onclick="addIconToNode()">🙂 Añadir Icono/Emoji</div>
+        <div class="context-menu-item" onclick="changeNodeColor()">🎨 Cambiar Color</div>
+        <div class="context-menu-item danger" onclick="deleteSelectedNode()">🗑️ Eliminar</div>
     </div>
     
-    <div class="loading">
-        <div class="loading-spinner"></div>
-    </div>
-    
+    <div class="loading"><div class="loading-spinner"></div></div>
     <div class="selection-indicator" id="selectionIndicator"></div>
+    <input type="file" id="importFileInput" accept=".json" onchange="handleFileImport(event)">
     
     <script>
-        // Verificar si las librerías están cargadas
-        function checkLibraries() {
-            if (typeof vis === 'undefined') {
-                alert('Error: La librería Vis.js no se pudo cargar. Por favor, recarga la página.');
-                return false;
-            }
-            if (typeof Swal === 'undefined') {
-                console.warn('SweetAlert2 no está disponible, usando alerts nativos como fallback');
-                // Crear un objeto Swal de fallback
-                window.Swal = {
-                    fire: function(options) {
-                        if (typeof options === 'string') {
-                            alert(options);
-                            return Promise.resolve({ isConfirmed: true });
-                        } else if (options.input) {
-                            const result = prompt(options.title || '', options.inputValue || '');
-                            return Promise.resolve({ 
-                                isConfirmed: result !== null, 
-                                value: result 
-                            });
-                        } else if (options.showCancelButton) {
-                            const result = confirm(options.title + '\n' + (options.text || ''));
-                            return Promise.resolve({ isConfirmed: result });
-                        } else {
-                            alert((options.title || '') + '\n' + (options.text || ''));
-                            return Promise.resolve({ isConfirmed: true });
-                        }
-                    }
-                };
-            }
-            return true;
-        }
-
+        // --- VARIABLES GLOBALES Y ESTADO DE LA APLICACIÓN ---
         let network = null;
-        let nodes = null;
-        let edges = null;
+        let nodes = new vis.DataSet();
+        let edges = new vis.DataSet();
         let nodeIdCounter = 0;
-        let selectedNodes = [];
-        let selectedEdges = [];
+        let selectedNode = null;
         let physicsEnabled = true;
-        let lastRightClickedNode = null;
         
-        // Temas predefinidos
+        // --- TEMAS Y CONFIGURACIÓN VISUAL ---
         const themes = {
-            cosmic: {
-                node: { background: '#6366f1', border: '#818cf8', font: '#ffffff' },
-                edge: { color: '#818cf8', highlight: '#c084fc' }
-            },
-            nature: {
-                node: { background: '#10b981', border: '#34d399', font: '#ffffff' },
-                edge: { color: '#34d399', highlight: '#6ee7b7' }
-            },
-            tech: {
-                node: { background: '#f59e0b', border: '#fbbf24', font: '#1f2937' },
-                edge: { color: '#fbbf24', highlight: '#fde68a' }
-            },
-            minimal: {
-                node: { background: '#e5e7eb', border: '#9ca3af', font: '#1f2937' },
-                edge: { color: '#9ca3af', highlight: '#6b7280' }
-            }
+            cosmic: { node: { background: '#6366f1', border: '#818cf8', font: '#ffffff' }, edge: { color: '#818cf8', highlight: '#c084fc' } },
+            nature: { node: { background: '#10b981', border: '#34d399', font: '#ffffff' }, edge: { color: '#34d399', highlight: '#6ee7b7' } },
+            tech: { node: { background: '#f59e0b', border: '#fbbf24', font: '#1f2937' }, edge: { color: '#fbbf24', highlight: '#fde68a' } },
+            minimal: { node: { background: '#e5e7eb', border: '#9ca3af', font: '#1f2937' }, edge: { color: '#9ca3af', highlight: '#6b7280' } }
         };
-        
         let currentTheme = themes.cosmic;
-        
-        // Inicializar el mapa mental vacío
+
+        // --- INICIALIZACIÓN Y EVENTOS DE RED ---
         function initNetwork() {
             const container = document.getElementById('mindmap');
-            const data = { nodes: new vis.DataSet(), edges: new vis.DataSet() };
-            
+            const data = { nodes, edges };
             const options = {
                 nodes: {
-                    shape: 'box',
-                    borderWidth: 2,
-                    borderWidthSelected: 3,
-                    font: {
-                        size: 16,
-                        face: 'Segoe UI, Arial, sans-serif'
-                    },
-                    shadow: {
-                        enabled: true,
-                        size: 10,
-                        x: 5,
-                        y: 5
-                    },
-                    chosen: {
-                        node: function(values, id, selected, hovering) {
-                            values.size = 30;
-                            values.borderWidth = 4;
-                            values.shadow = {
-                                enabled: true,
-                                size: 20,
-                                x: 5,
-                                y: 5
-                            };
-                        }
-                    }
+                    shape: 'box', borderWidth: 2, borderWidthSelected: 3,
+                    font: { size: 16, face: 'Segoe UI, Arial, sans-serif' },
+                    shadow: { enabled: true, size: 10, x: 5, y: 5 },
+                    mass: 1.5
                 },
                 edges: {
                     width: 2,
-                    smooth: {
-                        type: 'curvedCW',
-                        roundness: 0.2
-                    },
-                    arrows: {
-                        to: {
-                            enabled: true,
-                            scaleFactor: 0.5
-                        }
-                    },
-                    shadow: true,
-                    chosen: {
-                        edge: function(values, id, selected, hovering) {
-                            values.width = 4;
-                        }
-                    }
+                    smooth: { type: 'dynamic' },
+                    arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+                    shadow: true
                 },
                 layout: {
-                    hierarchical: {
-                        enabled: true,
-                        direction: 'UD',
-                        sortMethod: 'directed',
-                        nodeSpacing: 150,
-                        levelSeparation: 150
-                    }
+                    hierarchical: { enabled: true, direction: 'UD', sortMethod: 'directed', nodeSpacing: 150, levelSeparation: 150 }
                 },
                 physics: {
                     enabled: true,
-                    hierarchicalRepulsion: {
-                        nodeDistance: 150
-                    }
+                    hierarchicalRepulsion: { nodeDistance: 180 }
                 },
                 interaction: {
-                    hover: true,
-                    tooltipDelay: 200,
-                    hideEdgesOnDrag: true,
-                    selectConnectedEdges: false
-                }
+                    hover: true, tooltipDelay: 200, hideEdgesOnDrag: true, selectConnectedEdges: false, navigationButtons: true
+                },
+                manipulation: { enabled: false }
             };
-            
             network = new vis.Network(container, data, options);
-            nodes = data.nodes;
-            edges = data.edges;
-            
-            // Eventos interactivos mejorados
-            network.on('doubleClick', function(params) {
-                if (params.nodes.length > 0) {
-                    editNode(params.nodes[0]);
-                } else {
-                    // Doble clic en espacio vacío: crear nuevo nodo
-                    const position = params.pointer.canvas;
-                    createNodeAtPosition(position.x, position.y);
-                }
+            setupNetworkEvents();
+        }
+
+        function setupNetworkEvents() {
+            network.on('doubleClick', params => {
+                if (params.nodes.length > 0) editNode(params.nodes[0]);
             });
-            
-            network.on('oncontext', function(params) {
+
+            network.on('oncontext', params => {
                 params.event.preventDefault();
+                hideContextMenu();
                 if (params.nodes.length > 0) {
-                    lastRightClickedNode = params.nodes[0];
+                    selectedNode = params.nodes[0];
+                    network.selectNodes([selectedNode]);
                     showContextMenu(params.event.clientX, params.event.clientY);
                 }
             });
-            
-            network.on('click', function(params) {
+
+            network.on('click', params => {
                 hideContextMenu();
-                updateSelection(params.nodes, params.edges);
+                updateSelection(params.nodes);
             });
             
-            network.on('selectNode', function(params) {
-                updateSelection(params.nodes, params.edges);
+            // Guardar automáticamente al arrastrar un nodo
+            network.on('dragEnd', () => saveMapToLocalStorage());
+
+            document.addEventListener('click', e => {
+                if (!document.getElementById('contextMenu').contains(e.target)) {
+                    hideContextMenu();
+                }
             });
             
-            network.on('deselectNode', function(params) {
-                updateSelection(params.nodes, params.edges);
-            });
-            
-            // Ocultar menú contextual al hacer clic fuera
-            document.addEventListener('click', hideContextMenu);
-            
-            // Atajos de teclado
             document.addEventListener('keydown', handleKeyboardShortcuts);
         }
+
+        // --- LÓGICA DE LA IA (GEMINI API) ---
         
-        // Crear nodo en posición específica
-        function createNodeAtPosition(x, y) {
+        /**
+         * Genera un mapa mental completo basado en el prompt del usuario.
+         */
+        async function generateMindMap() {
+            const userPrompt = document.getElementById('promptInput').value.trim();
+            if (!userPrompt) {
+                showToast('warning', 'Campo vacío', 'Por favor, ingresa una idea o tema.');
+                return;
+            }
+            
+            resetMapData();
+            document.querySelector('.loading').style.display = 'flex';
+
+            const structuredPrompt = `Eres un experto creando mapas mentales claros y concisos. Basado en el tema central "${userPrompt}", genera una estructura de mapa mental. El mapa debe tener un nodo central (nivel 0), varios nodos principales (nivel 1) y algunos sub-nodos (nivel 2). Devuelve la respuesta EXCLUSIVAMENTE en formato JSON, siguiendo el esquema proporcionado. El nodo con id 0 debe ser el nodo central con el tema "${userPrompt}". Asegúrate de que los IDs sean únicos y secuenciales empezando en 0. No incluyas explicaciones ni texto adicional, solo el objeto JSON.`;
+            const jsonSchema = {
+                type: "OBJECT",
+                properties: {
+                    "nodes": {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "id": { "type": "NUMBER" },
+                                "label": { "type": "STRING" },
+                                "level": { "type": "NUMBER" }
+                            },
+                            required: ["id", "label", "level"]
+                        }
+                    },
+                    "edges": {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: { "from": { "type": "NUMBER" }, "to": { "type": "NUMBER" } },
+                            required: ["from", "to"]
+                        }
+                    }
+                },
+                required: ["nodes", "edges"]
+            };
+
+            try {
+                const mapData = await callGeminiAPI(structuredPrompt, jsonSchema);
+                const themedNodes = mapData.nodes.map(node => ({
+                    ...node,
+                    ...getNodeColor(node.level),
+                    font: { size: node.level === 0 ? 22 : (node.level === 1 ? 16 : 14) },
+                    ...(node.level === 0 && {size: 40, borderWidth: 3, mass: 3})
+                }));
+                
+                nodeIdCounter = Math.max(-1, ...themedNodes.map(n => n.id)) + 1;
+                nodes.add(themedNodes);
+                edges.add(mapData.edges);
+                
+                document.getElementById('mindmap').classList.add('has-content');
+                network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+                showToast('success', '¡Mapa generado con IA!', 'Tu mapa mental está listo.');
+                saveMapToLocalStorage();
+            } catch (error) {
+                console.error("Error al generar el mapa mental:", error);
+                showToast('error', 'Error de Generación', 'No se pudo crear el mapa. Revisa la consola para más detalles.');
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        }
+
+        /**
+         * Expande un nodo seleccionado con ideas generadas por la IA.
+         */
+        async function expandNodeWithAI() {
+            if (!selectedNode) return;
+
+            const parentNode = nodes.get(selectedNode);
+            document.querySelector('.loading').style.display = 'flex';
+
+            const structuredPrompt = `Eres un asistente creativo de mapas mentales. Para el concepto central "${parentNode.label}", genera entre 3 y 5 ideas o sub-temas relacionados para expandirlo. Devuelve la respuesta EXCLUSIVAMENTE en formato JSON con una lista de los nuevos conceptos. El JSON debe seguir el esquema proporcionado. No incluyas el nodo padre en la respuesta, solo los nuevos nodos hijos.`;
+            const jsonSchema = {
+                type: "OBJECT",
+                properties: {
+                    "nuevas_ideas": {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: { "label": { type: "STRING" } },
+                            required: ["label"]
+                        }
+                    }
+                },
+                required: ["nuevas_ideas"]
+            };
+
+            try {
+                const result = await callGeminiAPI(structuredPrompt, jsonSchema);
+                const childLevel = (parentNode.level || 0) + 1;
+                
+                result.nuevas_ideas.forEach(idea => {
+                    const childId = nodeIdCounter++;
+                    nodes.add({ id: childId, label: idea.label, level: childLevel, ...getNodeColor(childLevel) });
+                    edges.add({ from: selectedNode, to: childId });
+                });
+
+                showToast('success', 'Nodo expandido', `Se añadieron ${result.nuevas_ideas.length} ideas nuevas.`);
+                saveMapToLocalStorage();
+                network.fit({ nodes: [selectedNode], animation: true });
+
+            } catch (error) {
+                 console.error("Error al expandir el nodo con IA:", error);
+                showToast('error', 'Error de Expansión', 'No se pudieron generar las ideas.');
+            } finally {
+                document.querySelector('.loading').style.display = 'none';
+            }
+        }
+
+        /**
+         * Función genérica para llamar a la API de Gemini.
+         */
+        async function callGeminiAPI(prompt, schema) {
+            const apiKey = ""; // La API Key se inyectará en el entorno de ejecución. No es necesario añadirla aquí.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json();
+                console.error("API Error Response:", errorBody);
+                throw new Error(`Error de la API: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+                throw new Error("Respuesta inesperada o vacía de la API.");
+            }
+
+            return JSON.parse(result.candidates[0].content.parts[0].text);
+        }
+
+        // --- MANIPULACIÓN DE NODOS Y ARISTAS (MANUAL) ---
+        async function addNode() {
+            const { value: label } = await Swal.fire({
+                title: 'Añadir Nuevo Nodo', input: 'text', inputPlaceholder: 'Texto del nuevo nodo...',
+                showCancelButton: true, confirmButtonText: 'Crear Nodo', ...getSwalTheme()
+            });
+            if (label) {
+                const newId = nodeIdCounter++;
+                const parentSelection = network.getSelectedNodes();
+                const level = parentSelection.length > 0 ? (nodes.get(parentSelection[0]).level || 0) + 1 : 0;
+                
+                nodes.add({ id: newId, label, level, ...getNodeColor(level) });
+
+                if (parentSelection.length > 0) {
+                    edges.add({from: parentSelection[0], to: newId});
+                }
+                
+                if (nodes.length === 1) document.getElementById('mindmap').classList.add('has-content');
+                saveMapToLocalStorage();
+            }
+        }
+        
+        async function editNode(nodeId) {
+            const node = nodes.get(nodeId);
+            const { value: newLabel } = await Swal.fire({
+                title: 'Editar Nodo', input: 'text', inputValue: node.label,
+                showCancelButton: true, confirmButtonText: 'Guardar', ...getSwalTheme()
+            });
+            if (newLabel && newLabel !== node.label) {
+                 nodes.update({ id: nodeId, label: newLabel });
+                 saveMapToLocalStorage();
+            }
+        }
+        
+        async function addChildNode() {
+            if (!selectedNode) return;
+            const { value: label } = await Swal.fire({
+                title: `Añadir hijo a "${nodes.get(selectedNode).label}"`, input: 'text', inputPlaceholder: 'Texto del nodo hijo...',
+                showCancelButton: true, confirmButtonText: 'Añadir', ...getSwalTheme()
+            });
+            if (label) {
+                const parentNode = nodes.get(selectedNode);
+                const childLevel = (parentNode.level || 0) + 1;
+                const childId = nodeIdCounter++;
+                nodes.add({ id: childId, label, level: childLevel, ...getNodeColor(childLevel) });
+                edges.add({ from: selectedNode, to: childId });
+                saveMapToLocalStorage();
+            }
+        }
+        
+        function deleteSelectedNodes() {
+            const selection = network.getSelection();
+            if (selection.nodes.length === 0 && selection.edges.length === 0) {
+                showToast('warning', 'Nada seleccionado', 'Selecciona uno o más nodos/aristas.');
+                return;
+            }
             Swal.fire({
-                title: 'Nuevo nodo',
-                input: 'text',
-                inputPlaceholder: 'Texto del nodo',
-                showCancelButton: true,
-                confirmButtonText: 'Crear',
-                cancelButtonText: 'Cancelar',
-                background: '#1e1b4b',
-                color: '#f8fafc'
-            }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    const newNodeId = nodeIdCounter++;
-                    const canvasPosition = network.canvasToDOM({x: x, y: y});
-                    const networkPosition = network.DOMtoCanvas(canvasPosition);
-                    
-                    nodes.add({
-                        id: newNodeId,
-                        label: result.value,
-                        x: networkPosition.x,
-                        y: networkPosition.y,
-                        color: {
-                            background: currentTheme.node.background,
-                            border: currentTheme.node.border
-                        },
-                        font: { color: currentTheme.node.font }
-                    });
-                    
-                    document.getElementById('mindmap').classList.add('has-content');
+                title: '¿Estás seguro?', text: `Se eliminarán ${selection.nodes.length} nodos y sus conexiones.`,
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar', ...getSwalTheme()
+            }).then(result => {
+                if (result.isConfirmed) {
+                    nodes.remove(selection.nodes);
+                    // vis-network se encarga de las aristas conectadas
+                    if (nodes.length === 0) document.getElementById('mindmap').classList.remove('has-content');
+                    saveMapToLocalStorage();
                 }
             });
         }
         
-        // Manejar atajos de teclado
+        async function addIconToNode() {
+            if(!selectedNode) return;
+            const node = nodes.get(selectedNode);
+            const { value: emoji } = await Swal.fire({
+                title: 'Añadir Icono/Emoji',
+                input: 'text',
+                inputPlaceholder: 'Pega un emoji aquí (ej: ✨)',
+                ...getSwalTheme()
+            });
+
+            if (emoji) {
+                // Elimina emojis anteriores para no acumularlos
+                const plainLabel = node.label.replace(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu, '').trim();
+                nodes.update({ id: selectedNode, label: `${emoji} ${plainLabel}` });
+                saveMapToLocalStorage();
+            }
+        }
+
         function handleKeyboardShortcuts(event) {
-            if (event.target.tagName === 'INPUT') return;
-            
+            if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
             switch(event.key) {
                 case 'Delete':
                 case 'Backspace':
-                    if (selectedNodes.length > 0) {
-                        deleteSelectedNodes();
-                    }
+                    event.preventDefault();
+                    deleteSelectedNodes();
                     break;
                 case 'Escape':
                     network.unselectAll();
-                    hideContextMenu();
-                    break;
-                case 'a':
-                    if (event.ctrlKey || event.metaKey) {
-                        event.preventDefault();
-                        network.selectNodes(nodes.getIds());
-                    }
                     break;
                 case 'Enter':
-                    if (selectedNodes.length === 1) {
-                        editNode(selectedNodes[0]);
-                    }
-                    break;
-                case 'n':
-                    if (event.ctrlKey || event.metaKey) {
+                    if (network.getSelectedNodes().length === 1) {
                         event.preventDefault();
-                        addNode();
+                        editNode(network.getSelectedNodes()[0]);
                     }
                     break;
             }
         }
+
+        // --- PERSISTENCIA Y GESTIÓN DE DATOS ---
+
+        function saveMapToLocalStorage() {
+            if (nodes.length > 0) {
+                const mapData = {
+                    nodes: nodes.get({ fields: ['id', 'label', 'level', 'color', 'font'] }),
+                    edges: edges.get(),
+                    nodeIdCounter: nodeIdCounter
+                };
+                localStorage.setItem('mindflowData', JSON.stringify(mapData));
+            } else {
+                localStorage.removeItem('mindflowData');
+            }
+        }
+
+        function loadMapFromLocalStorage() {
+            const savedData = localStorage.getItem('mindflowData');
+            if (savedData) {
+                try {
+                    const mapData = JSON.parse(savedData);
+                    nodes.add(mapData.nodes);
+                    edges.add(mapData.edges);
+                    nodeIdCounter = mapData.nodeIdCounter || (Math.max(-1, ...mapData.nodes.map(n => n.id)) + 1);
+                    document.getElementById('mindmap').classList.add('has-content');
+                    network.fit();
+                    showToast('info', 'Mapa cargado', 'Se ha restaurado tu sesión anterior.');
+                } catch(e) {
+                    console.error("Error al cargar datos locales, reiniciando.", e);
+                    localStorage.removeItem('mindflowData');
+                }
+            }
+        }
+
+        function exportJSON() {
+            if (nodes.length === 0) {
+                showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
+                return;
+            }
+            const mapData = {
+                nodes: nodes.get(),
+                edges: edges.get(),
+                nodeIdCounter: nodeIdCounter
+            };
+            const dataStr = JSON.stringify(mapData, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const promptName = document.getElementById('promptInput').value.trim().replace(/\s+/g, '_') || 'mapa_mental';
+            link.download = `MindFlow_${promptName}.json`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function handleFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const mapData = JSON.parse(e.target.result);
+                    if (mapData.nodes && mapData.edges) {
+                        resetMapData();
+                        nodes.add(mapData.nodes);
+                        edges.add(mapData.edges);
+                        nodeIdCounter = mapData.nodeIdCounter || (Math.max(-1, ...mapData.nodes.map(n => n.id)) + 1);
+                        document.getElementById('mindmap').classList.add('has-content');
+                        network.fit();
+                        showToast('success', 'Mapa importado', 'El mapa se ha cargado correctamente.');
+                        saveMapToLocalStorage();
+                    } else {
+                        throw new Error("El archivo JSON no tiene el formato correcto.");
+                    }
+                } catch (error) {
+                    console.error("Error al importar JSON:", error);
+                    showToast('error', 'Error de importación', 'El archivo no es un mapa mental válido.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input para poder cargar el mismo archivo de nuevo
+        }
+
+        // --- PERSONALIZACIÓN VISUAL ---
+        function updateTheme() {
+            currentTheme = themes[document.getElementById('themeSelect').value];
+            document.getElementById('colorPicker').value = currentTheme.node.background;
+            applyThemeToAll();
+        }
+
+        function updateLayout() {
+            const layout = document.getElementById('layoutSelect').value;
+            network.setOptions({
+                layout: { hierarchical: { enabled: layout === 'hierarchical' } },
+                physics: { 
+                    enabled: true,
+                    solver: layout === 'radial' ? 'forceAtlas2Based' : 'hierarchicalRepulsion'
+                }
+            });
+        }
+
+        function updateColors() {
+            currentTheme.node.background = document.getElementById('colorPicker').value;
+            applyThemeToAll();
+        }
+
+        function applyThemeToAll() {
+            nodes.forEach(node => {
+                nodes.update({ id: node.id, ...getNodeColor(node.level) });
+            });
+            edges.forEach(edge => {
+                edges.update({ id: edge.id, color: { color: currentTheme.edge.color, highlight: currentTheme.edge.highlight } });
+            });
+            saveMapToLocalStorage();
+        }
         
-        // Actualizar selección y mostrar indicador
-        function updateSelection(nodeIds, edgeIds) {
-            selectedNodes = nodeIds || [];
-            selectedEdges = edgeIds || [];
-            
+        async function changeNodeColor() {
+            if (!selectedNode) return;
+            const { value: color } = await Swal.fire({
+                title: 'Elige un color para el nodo', input: 'color',
+                inputValue: nodes.get(selectedNode).color.background,
+                showCancelButton: true, confirmButtonText: 'Aplicar', ...getSwalTheme()
+            });
+            if (color) {
+                nodes.update({ id: selectedNode, color: { background: color, border: color } });
+                saveMapToLocalStorage();
+            }
+        }
+        
+        function getNodeColor(level = 0) {
+            const opacities = ['', 'dd', 'aa', '88'];
+            const opacity = opacities[level] || '66';
+            return {
+                color: {
+                    background: currentTheme.node.background + opacity,
+                    border: currentTheme.node.border
+                },
+                font: { color: currentTheme.node.font }
+            };
+        }
+        
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            network.setOptions({ physics: { enabled: physicsEnabled } });
+            showToast('info', 'Física', `Simulación ${physicsEnabled ? 'activada' : 'desactivada'}.`);
+        }
+
+        // --- UTILIDADES Y UI HELPERS ---
+        function exportPNG() {
+            if (nodes.length === 0) {
+                showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
+                return;
+            }
+            const container = document.getElementById('mindmap');
+            showToast('info', 'Exportando...', 'Generando imagen PNG, por favor espera.');
+            html2canvas(container.getElementsByTagName('canvas')[0], {
+                backgroundColor: '#0f0f23', scale: 2, logging: false, useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `MindFlow-${document.getElementById('promptInput').value || 'map'}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            }).catch(err => {
+                console.error("Error al exportar a PNG:", err);
+                showToast('error', 'Error de Exportación', 'No se pudo generar la imagen.');
+            });
+        }
+        
+        function resetMapData() {
+            nodes.clear();
+            edges.clear();
+            nodeIdCounter = 0;
+            document.getElementById('mindmap').classList.remove('has-content');
+        }
+
+        function resetMap() {
+            Swal.fire({
+                title: '¿Reiniciar Mapa?', text: "Se perderá todo el mapa actual. Esta acción no se puede deshacer.",
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Sí, reiniciar', cancelButtonText: 'Cancelar', ...getSwalTheme()
+            }).then(result => {
+                if (result.isConfirmed) {
+                    resetMapData();
+                    localStorage.removeItem('mindflowData');
+                    document.getElementById('promptInput').value = '';
+                }
+            });
+        }
+
+        function showContextMenu(x, y) {
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
+            menu.style.display = 'block';
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+            selectedNode = null;
+        }
+
+        function updateSelection(nodeIds) {
             const indicator = document.getElementById('selectionIndicator');
-            
-            if (selectedNodes.length > 0) {
-                const nodeText = selectedNodes.length === 1 ? 
-                    `Nodo seleccionado: ${nodes.get(selectedNodes[0]).label}` :
-                    `${selectedNodes.length} nodos seleccionados`;
-                indicator.textContent = nodeText;
+            if (nodeIds.length > 0) {
+                const nodeText = nodeIds.length === 1 ? `Nodo: "${nodes.get(nodeIds[0]).label}"` : `${nodeIds.length} nodos`;
+                indicator.textContent = `Seleccionado: ${nodeText}`;
                 indicator.classList.add('show');
             } else {
                 indicator.classList.remove('show');
             }
         }
         
-        // Mostrar menú contextual
-        function showContextMenu(x, y) {
-            const menu = document.getElementById('contextMenu');
-            menu.style.left = x + 'px';
-            menu.style.top = y + 'px';
-            menu.style.display = 'block';
-        }
+        function editSelectedNode() { if (selectedNode) editNode(selectedNode); }
+        function deleteSelectedNode() { if (selectedNode) { network.selectNodes([selectedNode]); deleteSelectedNodes(); } }
         
-        // Ocultar menú contextual
-        function hideContextMenu() {
-            document.getElementById('contextMenu').style.display = 'none';
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
+            didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
+        });
+        function showToast(icon, title, text = '') {
+            Toast.fire({ icon, title, text, background: '#1e1b4b', color: '#f8fafc' });
         }
+        function getSwalTheme() { return { background: '#1e1b4b', color: '#f8fafc', confirmButtonColor: '#6366f1', cancelButtonColor: '#6b7280' }; }
         
-        // Generar mapa mental basado en el prompt
-        function generateMindMap() {
-            const prompt = document.getElementById('promptInput').value.trim();
-            if (!prompt) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Campo vacío',
-                    text: 'Por favor, ingresa una idea o tema para generar el mapa mental',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                });
-                return;
-            }
-            
-            // Limpiar mapa anterior
-            nodes.clear();
-            edges.clear();
-            nodeIdCounter = 0;
-            
-            // Mostrar loading
-            document.querySelector('.loading').style.display = 'block';
-            
-            setTimeout(() => {
-                generateExampleMap(prompt);
-                
-                // Marcar que hay contenido
-                document.getElementById('mindmap').classList.add('has-content');
-                
-                document.querySelector('.loading').style.display = 'none';
-                
-                // Animación de entrada
-                network.fit({
-                    animation: {
-                        duration: 1000,
-                        easingFunction: 'easeInOutQuad'
-                    }
-                });
-                
-                // Mostrar mensaje de éxito
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Mapa generado!',
-                    text: 'Tu mapa mental está listo. Puedes editarlo, añadir nodos o cambiar conexiones.',
-                    background: '#1e1b4b',
-                    color: '#f8fafc',
-                    timer: 3000,
-                    showConfirmButton: false,
-                    position: 'top-end',
-                    toast: true
-                });
-            }, 1000);
-        }
-        
-        // Generar un mapa de ejemplo mejorado
-        function generateExampleMap(prompt) {
-            const centralId = nodeIdCounter++;
-            const theme = currentTheme;
-            
-            // Nodo central más prominente
-            nodes.add({
-                id: centralId,
-                label: prompt,
-                level: 0,
-                color: {
-                    background: theme.node.background,
-                    border: theme.node.border
-                },
-                font: { color: theme.node.font, size: 22 },
-                size: 40,
-                borderWidth: 3
-            });
-            
-            // Generar nodos secundarios basados en el tema
-            const concepts = generateConcepts(prompt);
-            
-            concepts.forEach((concept, index) => {
-                const nodeId = nodeIdCounter++;
-                
-                nodes.add({
-                    id: nodeId,
-                    label: concept,
-                    level: 1,
-                    color: {
-                        background: theme.node.background + 'dd',
-                        border: theme.node.border
-                    },
-                    font: { color: theme.node.font, size: 16 }
-                });
-                
-                edges.add({
-                    from: centralId,
-                    to: nodeId,
-                    color: { color: theme.edge.color, highlight: theme.edge.highlight },
-                    width: 3
-                });
-                
-                // Generar subnodos con variación
-                const subconcepts = generateSubconcepts(concept);
-                subconcepts.forEach((sub, subIndex) => {
-                    const subNodeId = nodeIdCounter++;
-                    
-                    nodes.add({
-                        id: subNodeId,
-                        label: sub,
-                        level: 2,
-                        color: {
-                            background: theme.node.background + 'aa',
-                            border: theme.node.border
-                        },
-                        font: { color: theme.node.font, size: 14 }
-                    });
-                    
-                    edges.add({
-                        from: nodeId,
-                        to: subNodeId,
-                        color: { 
-                            color: theme.edge.color + 'aa', 
-                            highlight: theme.edge.highlight 
-                        },
-                        width: 2
-                    });
-                });
-            });
-        }
-        
-        // Generar conceptos mejorados basados en el prompt
-        function generateConcepts(prompt) {
-            const lowerPrompt = prompt.toLowerCase();
-            
-            if (lowerPrompt.includes('energía')) {
-                return ['Energía Cinética', 'Energía Potencial', 'Energía Térmica', 'Energía Eléctrica', 'Energía Nuclear', 'Energía Renovable'];
-            } else if (lowerPrompt.includes('programación')) {
-                return ['Variables', 'Funciones', 'Bucles', 'Condicionales', 'Estructuras de Datos', 'Algoritmos'];
-            } else if (lowerPrompt.includes('marketing')) {
-                return ['Segmentación', 'Posicionamiento', 'Marketing Mix', 'Análisis FODA', 'Marketing Digital', 'Branding'];
-            } else if (lowerPrompt.includes('biología')) {
-                return ['Células', 'Genética', 'Evolución', 'Ecosistemas', 'Anatomía', 'Fisiología'];
-            } else if (lowerPrompt.includes('matemáticas') || lowerPrompt.includes('matemática')) {
-                return ['Álgebra', 'Geometría', 'Cálculo', 'Estadística', 'Trigonometría', 'Probabilidad'];
-            } else if (lowerPrompt.includes('historia')) {
-                return ['Prehistoria', 'Antigua', 'Medieval', 'Moderna', 'Contemporánea', 'Siglo XXI'];
-            } else if (lowerPrompt.includes('ciencia')) {
-                return ['Física', 'Química', 'Biología', 'Matemáticas', 'Astronomía', 'Geología'];
-            } else if (lowerPrompt.includes('arte')) {
-                return ['Pintura', 'Escultura', 'Música', 'Literatura', 'Teatro', 'Cine'];
-            } else if (lowerPrompt.includes('deporte')) {
-                return ['Fútbol', 'Baloncesto', 'Natación', 'Atletismo', 'Tenis', 'Ciclismo'];
-            } else if (lowerPrompt.includes('tecnología')) {
-                return ['Hardware', 'Software', 'Internet', 'IA', 'Robótica', 'Ciberseguridad'];
-            } else {
-                return ['Definición', 'Características', 'Tipos', 'Aplicaciones', 'Ejemplos', 'Ventajas'];
-            }
-        }
-        
-        // Generar subconceptos completos
-        function generateSubconcepts(concept) {
-            const lowerConcept = concept.toLowerCase();
-            
-            if (lowerConcept.includes('cinética')) {
-                return ['Movimiento', 'Velocidad', 'Fórmula: ½mv²'];
-            } else if (lowerConcept.includes('potencial')) {
-                return ['Gravedad', 'Altura', 'Fórmula: mgh'];
-            } else if (lowerConcept.includes('térmica')) {
-                return ['Calor', 'Temperatura', 'Transmisión'];
-            } else if (lowerConcept.includes('eléctrica')) {
-                return ['Corriente', 'Voltaje', 'Resistencia'];
-            } else if (lowerConcept.includes('nuclear')) {
-                return ['Fisión', 'Fusión', 'Radiactividad'];
-            } else if (lowerConcept.includes('renovable')) {
-                return ['Solar', 'Eólica', 'Hidráulica'];
-            } else if (lowerConcept.includes('variables')) {
-                return ['Tipos de datos', 'Declaración', 'Alcance'];
-            } else if (lowerConcept.includes('funciones')) {
-                return ['Parámetros', 'Retorno', 'Recursividad'];
-            } else if (lowerConcept.includes('bucles')) {
-                return ['For', 'While', 'Do-While'];
-            } else if (lowerConcept.includes('condicionales')) {
-                return ['If-Else', 'Switch', 'Operadores'];
-            } else if (lowerConcept.includes('estructuras')) {
-                return ['Arrays', 'Listas', 'Diccionarios'];
-            } else if (lowerConcept.includes('algoritmos')) {
-                return ['Ordenamiento', 'Búsqueda', 'Recursión'];
-            } else if (lowerConcept.includes('células')) {
-                return ['Núcleo', 'Citoplasma', 'Membrana'];
-            } else if (lowerConcept.includes('genética')) {
-                return ['ADN', 'ARN', 'Cromosomas'];
-            } else if (lowerConcept.includes('evolución')) {
-                return ['Selección Natural', 'Mutación', 'Adaptación'];
-            } else if (lowerConcept.includes('ecosistemas')) {
-                return ['Productores', 'Consumidores', 'Descomponedores'];
-            } else if (lowerConcept.includes('álgebra')) {
-                return ['Ecuaciones', 'Polinomios', 'Factorización'];
-            } else if (lowerConcept.includes('geometría')) {
-                return ['Puntos', 'Líneas', 'Figuras'];
-            } else if (lowerConcept.includes('cálculo')) {
-                return ['Límites', 'Derivadas', 'Integrales'];
-            } else if (lowerConcept.includes('marketing digital')) {
-                return ['SEO', 'SEM', 'Redes Sociales'];
-            } else if (lowerConcept.includes('segmentación')) {
-                return ['Demográfica', 'Geográfica', 'Psicográfica'];
-            } else if (lowerConcept.includes('branding')) {
-                return ['Logo', 'Identidad', 'Posicionamiento'];
-            } else {
-                return ['Elemento 1', 'Elemento 2', 'Elemento 3'];
-            }
-        }
-        
-        // Actualizar tema
-        function updateTheme() {
-            const themeSelect = document.getElementById('themeSelect').value;
-            currentTheme = themes[themeSelect];
-            
-            // Actualizar colores de todos los nodos
-            const allNodes = nodes.get();
-            allNodes.forEach(node => {
-                const level = node.level || 0;
-                const opacity = level === 0 ? '' : (level === 1 ? 'dd' : 'aa');
-                nodes.update({
-                    id: node.id,
-                    color: {
-                        background: currentTheme.node.background + opacity,
-                        border: currentTheme.node.border
-                    },
-                    font: { color: currentTheme.node.font }
-                });
-            });
-            
-            // Actualizar colores de todas las aristas
-            const allEdges = edges.get();
-            allEdges.forEach(edge => {
-                edges.update({
-                    id: edge.id,
-                    color: { 
-                        color: currentTheme.edge.color, 
-                        highlight: currentTheme.edge.highlight 
-                    }
-                });
-            });
-        }
-        
-        // Actualizar disposición
-        function updateLayout() {
-            const layout = document.getElementById('layoutSelect').value;
-            let options = {};
-            
-            switch(layout) {
-                case 'hierarchical':
-                    options = {
-                        layout: {
-                            hierarchical: {
-                                enabled: true,
-                                direction: 'UD',
-                                sortMethod: 'directed'
-                            }
-                        }
-                    };
-                    break;
-                case 'radial':
-                    options = {
-                        layout: {
-                            hierarchical: {
-                                enabled: false
-                            }
-                        },
-                        physics: {
-                            solver: 'forceAtlas2Based'
-                        }
-                    };
-                    break;
-                case 'random':
-                    options = {
-                        layout: {
-                            hierarchical: {
-                                enabled: false
-                            },
-                            randomSeed: Math.floor(Math.random() * 1000)
-                        }
-                    };
-                    break;
-            }
-            
-            network.setOptions(options);
-        }
-        
-        // Actualizar colores personalizados
-        function updateColors() {
-            const color = document.getElementById('colorPicker').value;
-            currentTheme.node.background = color;
-            updateTheme();
-        }
-        
-        // Añadir nuevo nodo
-        async function addNode() {
-            try {
-                const nodeText = prompt('Ingresa el texto del nuevo nodo:');
-                if (!nodeText) return;
-                
-                const parentId = prompt('ID del nodo padre (opcional, deja vacío si no hay):');
-                
-                const newNodeId = nodeIdCounter++;
-                const parentIdNum = parentId ? parseInt(parentId) : null;
-                
-                nodes.add({
-                    id: newNodeId,
-                    label: nodeText,
-                    color: {
-                        background: currentTheme.node.background,
-                        border: currentTheme.node.border
-                    },
-                    font: { color: currentTheme.node.font }
-                });
-                
-                if (parentIdNum && nodes.get(parentIdNum)) {
-                    edges.add({
-                        from: parentIdNum,
-                        to: newNodeId,
-                        color: { 
-                            color: currentTheme.edge.color, 
-                            highlight: currentTheme.edge.highlight 
-                        }
-                    });
-                }
-                
-                document.getElementById('mindmap').classList.add('has-content');
-                network.fit();
-                
-                alert('¡Nodo añadido exitosamente!');
-            } catch (error) {
-                console.error('Error al añadir nodo:', error);
-                alert('Error al añadir el nodo');
-            }
-        }
-        
-        // Añadir conexión entre nodos
-        async function addConnection() {
-            const nodesList = nodes.get();
-            if (nodesList.length < 2) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Faltan nodos',
-                    text: 'Necesitas al menos 2 nodos para crear una conexión',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                });
-                return;
-            }
-            
-            // Mostrar lista de nodos disponibles
-            let nodesInfo = 'Nodos disponibles:\n';
-            nodesList.forEach(node => {
-                nodesInfo += `${node.id}: ${node.label}\n`;
-            });
-            
-            try {
-                const fromId = prompt(nodesInfo + '\nIngresa el ID del nodo origen:');
-                if (!fromId) return;
-                
-                const toId = prompt('Ingresa el ID del nodo destino:');
-                if (!toId) return;
-                
-                const fromIdNum = parseInt(fromId);
-                const toIdNum = parseInt(toId);
-                
-                if (nodes.get(fromIdNum) && nodes.get(toIdNum)) {
-                    edges.add({
-                        from: fromIdNum,
-                        to: toIdNum,
-                        color: { 
-                            color: currentTheme.edge.color, 
-                            highlight: currentTheme.edge.highlight 
-                        }
-                    });
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Conexión creada!',
-                        text: 'Los nodos han sido conectados exitosamente',
-                        background: '#1e1b4b',
-                        color: '#f8fafc',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    alert('Error: Uno o ambos nodos no existen');
-                }
-            } catch (error) {
-                console.error('Error al conectar nodos:', error);
-                alert('Error al crear la conexión');
-            }
-        }
-        
-        // Editar nodo
-        async function editNode(nodeId) {
-            const node = nodes.get(nodeId);
-            const { value: newLabel } = await Swal.fire({
-                title: 'Editar nodo',
-                input: 'text',
-                inputValue: node.label,
-                showCancelButton: true,
-                confirmButtonText: 'Guardar',
-                cancelButtonText: 'Cancelar',
-                background: '#1e1b4b',
-                color: '#f8fafc'
-            });
-            
-            if (newLabel) {
-                nodes.update({ id: nodeId, label: newLabel });
-            }
-        }
-        
-        // Funciones del menú contextual
-        function editSelectedNode() {
-            if (lastRightClickedNode) {
-                editNode(lastRightClickedNode);
-            }
-            hideContextMenu();
-        }
-        
-        function addChildNode() {
-            if (lastRightClickedNode) {
-                Swal.fire({
-                    title: 'Añadir nodo hijo',
-                    input: 'text',
-                    inputPlaceholder: 'Texto del nodo hijo',
-                    showCancelButton: true,
-                    confirmButtonText: 'Crear',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                }).then((result) => {
-                    if (result.isConfirmed && result.value) {
-                        const newNodeId = nodeIdCounter++;
-                        
-                        nodes.add({
-                            id: newNodeId,
-                            label: result.value,
-                            color: {
-                                background: currentTheme.node.background + 'aa',
-                                border: currentTheme.node.border
-                            },
-                            font: { color: currentTheme.node.font }
-                        });
-                        
-                        edges.add({
-                            from: lastRightClickedNode,
-                            to: newNodeId,
-                            color: { 
-                                color: currentTheme.edge.color, 
-                                highlight: currentTheme.edge.highlight 
-                            }
-                        });
-                    }
-                });
-            }
-            hideContextMenu();
-        }
-        
-        function duplicateNode() {
-            if (lastRightClickedNode) {
-                const originalNode = nodes.get(lastRightClickedNode);
-                const newNodeId = nodeIdCounter++;
-                
-                nodes.add({
-                    id: newNodeId,
-                    label: originalNode.label + ' (copia)',
-                    color: originalNode.color,
-                    font: originalNode.font
-                });
-            }
-            hideContextMenu();
-        }
-        
-        function changeNodeColor() {
-            if (lastRightClickedNode) {
-                Swal.fire({
-                    title: 'Cambiar color del nodo',
-                    input: 'color',
-                    inputValue: currentTheme.node.background,
-                    showCancelButton: true,
-                    confirmButtonText: 'Cambiar',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const node = nodes.get(lastRightClickedNode);
-                        nodes.update({
-                            id: lastRightClickedNode,
-                            color: {
-                                background: result.value,
-                                border: node.color.border
-                            }
-                        });
-                    }
-                });
-            }
-            hideContextMenu();
-        }
-        
-        function deleteSelectedNode() {
-            if (lastRightClickedNode) {
-                Swal.fire({
-                    title: '¿Eliminar nodo?',
-                    text: 'Esta acción no se puede deshacer',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, eliminar',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Eliminar aristas conectadas
-                        const connectedEdges = edges.get().filter(edge => 
-                            edge.from === lastRightClickedNode || edge.to === lastRightClickedNode
-                        );
-                        edges.remove(connectedEdges.map(edge => edge.id));
-                        
-                        // Eliminar nodo
-                        nodes.remove(lastRightClickedNode);
-                    }
-                });
-            }
-            hideContextMenu();
-        }
-        
-        function deleteSelectedNodes() {
-            if (selectedNodes.length > 0) {
-                Swal.fire({
-                    title: `¿Eliminar ${selectedNodes.length} nodo(s)?`,
-                    text: 'Esta acción no se puede deshacer',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, eliminar',
-                    cancelButtonText: 'Cancelar',
-                    background: '#1e1b4b',
-                    color: '#f8fafc'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        selectedNodes.forEach(nodeId => {
-                            // Eliminar aristas conectadas
-                            const connectedEdges = edges.get().filter(edge => 
-                                edge.from === nodeId || edge.to === nodeId
-                            );
-                            edges.remove(connectedEdges.map(edge => edge.id));
-                        });
-                        
-                        // Eliminar nodos
-                        nodes.remove(selectedNodes);
-                        selectedNodes = [];
-                    }
-                });
-            }
-        }
-        
-        // Alternar física
-        function togglePhysics() {
-            physicsEnabled = !physicsEnabled;
-            network.setOptions({ physics: { enabled: physicsEnabled } });
-            
-            const button = event.target;
-            button.textContent = physicsEnabled ? '⚡ Física ON/OFF' : '🔒 Física ON/OFF';
-            button.style.background = physicsEnabled ? '#f59e0b' : '#ef4444';
-        }
-        
-        // Exportar a PNG
-        function exportPNG() {
-            if (typeof html2canvas === 'undefined') {
-                alert('La función de exportar PNG no está disponible. Por favor, recarga la página.');
-                return;
-            }
-            
-            const container = document.getElementById('mindmap');
-            
-            try {
-                html2canvas(container, {
-                    backgroundColor: '#0f0f23',
-                    scale: 2
-                }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = 'mindmap.png';
-                    link.href = canvas.toDataURL();
-                    link.click();
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Imagen exportada!',
-                        text: 'Tu mapa mental ha sido descargado como PNG',
-                        background: '#1e1b4b',
-                        color: '#f8fafc',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }).catch(error => {
-                    console.error('Error al exportar PNG:', error);
-                    alert('Error al exportar la imagen. Inténtalo de nuevo.');
-                });
-            } catch (error) {
-                console.error('Error al inicializar html2canvas:', error);
-                alert('Error al exportar la imagen. La función no está disponible.');
-            }
-        }
-        
-        // Reiniciar mapa
-        function resetMap() {
+        // --- FUNCIÓN DE AYUDA ---
+        function showHelpModal() {
+            const helpHtml = `
+            <div class="help-content">
+                <h2>🤖 Funciones con IA</h2>
+                <ul>
+                    <li><strong>Generar MindFlow:</strong> Escribe una idea central y la IA creará un mapa mental completo para ti.</li>
+                    <li><strong>Expandir con IA:</strong> Haz clic derecho en un nodo y selecciona '🧠 Expandir con IA' para generar ideas secundarias automáticamente.</li>
+                </ul>
+
+                <h2>✍️ Edición Manual (Menú Clic Derecho)</h2>
+                <ul>
+                    <li><strong>Editar Nodo:</strong> Cambia el texto de cualquier nodo. También puedes hacer doble clic.</li>
+                    <li><strong>Añadir Hijo:</strong> Crea un nuevo nodo conectado al que seleccionaste.</li>
+                    <li><strong>Añadir Icono/Emoji:</strong> Personaliza tus nodos con emojis para hacerlos más visuales.</li>
+                    <li><strong>Cambiar Color:</strong> Elige un color específico para un nodo.</li>
+                    <li><strong>Eliminar:</strong> Borra el nodo seleccionado y sus conexiones.</li>
+                </ul>
+
+                <h2>⚙️ Controles Generales</h2>
+                <ul>
+                    <li><strong>Importar/Exportar JSON:</strong> Guarda tu trabajo en un archivo <code>.json</code> o carga uno existente. ¡Ideal para copias de seguridad!</li>
+                    <li><strong>Exportar PNG:</strong> Guarda una imagen de alta calidad de tu mapa mental.</li>
+                    <li><strong>Reiniciar:</strong> Borra todo el mapa y empieza de cero.</li>
+                    <li><strong>Física ON/OFF:</strong> Activa o desactiva la organización automática de nodos. Desactívala para colocar los nodos manualmente con precisión antes de exportar.</li>
+                    <li><strong>Persistencia Automática:</strong> ¡Tu trabajo se guarda en el navegador! Si recargas la página, tu mapa seguirá aquí.</li>
+                </ul>
+            </div>
+            `;
+
             Swal.fire({
-                title: '¿Reiniciar mapa?',
-                text: 'Se perderán todos los cambios actuales',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, reiniciar',
-                cancelButtonText: 'Cancelar',
-                background: '#1e1b4b',
-                color: '#f8fafc'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    nodes.clear();
-                    edges.clear();
-                    nodeIdCounter = 0;
-                    selectedNodes = [];
-                    selectedEdges = [];
-                    document.getElementById('promptInput').value = '';
-                    document.getElementById('mindmap').classList.remove('has-content');
-                    
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Mapa reiniciado!',
-                        text: 'Puedes comenzar con una nueva idea',
-                        background: '#1e1b4b',
-                        color: '#f8fafc',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                }
+                title: 'Guía de Ayuda de MindFlow',
+                html: helpHtml,
+                width: '80%',
+                ...getSwalTheme()
             });
         }
-        
-        // Inicializar la aplicación
-        window.onload = function() {
-            // Verificar que las librerías estén cargadas
-            if (!checkLibraries()) {
-                return;
-            }
-            
-            try {
-                initNetwork();
-                
-                // Permitir generar con Enter
-                document.getElementById('promptInput').addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        generateMindMap();
-                    }
-                });
-                
-                console.log('MindFlow iniciado correctamente');
-            } catch (error) {
-                console.error('Error al inicializar MindFlow:', error);
-                alert('Error al inicializar la aplicación. Por favor, recarga la página.');
-            }
+
+        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+        window.onload = () => {
+            initNetwork();
+            loadMapFromLocalStorage();
+            document.getElementById('promptInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') generateMindMap();
+            });
         };
     </script>
 </body>

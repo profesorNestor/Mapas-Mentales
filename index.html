@@ -81,6 +81,16 @@
         }
         .header p { color: #a5b4fc; font-size: 1.2rem; }
         
+        /* Botón de Ayuda */
+        .help-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            border-radius: 25px;
+        }
+
         /* Controles Principales (Input y botón de generar) */
         .controls {
             display: flex;
@@ -255,6 +265,13 @@
             border-radius: 3px;
             font-family: monospace;
         }
+        .help-content a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .help-content a:hover {
+            text-decoration: underline;
+        }
 
 
         /* Responsive Design */
@@ -263,6 +280,7 @@
             #mindmap { height: 55vh; width: calc(100% - 2rem); }
             .controls, .options, .action-buttons { padding: 0 1rem; }
             .btn { padding: 0.8rem 1.5rem; font-size: 0.9rem; }
+            .help-btn { top: 1rem; right: 1rem; }
         }
     </style>
 </head>
@@ -272,6 +290,7 @@
     <header class="header">
         <h1>MindFlow Pro</h1>
         <p>Transforma tus ideas en mapas mentales interactivos con IA</p>
+        <button class="btn btn-info help-btn" onclick="showHelpModal()">❓ Ayuda</button>
     </header>
     
     <div class="controls">
@@ -314,7 +333,6 @@
         <button class="btn btn-secondary small-btn" onclick="exportPNG()">📷 Exportar PNG</button>
         <button class="btn btn-info small-btn" onclick="togglePhysics()">⚛️ Física ON/OFF</button>
         <button class="btn btn-danger small-btn" onclick="resetMap()">🔄 Reiniciar</button>
-        <button class="btn btn-warning small-btn" onclick="showHelpModal()">❓ Ayuda</button>
     </div>
     
     <!-- Menú contextual (inicialmente oculto) -->
@@ -406,7 +424,7 @@
             network.on('dragEnd', () => saveMapToLocalStorage());
 
             document.addEventListener('click', e => {
-                if (!document.getElementById('contextMenu').contains(e.target)) {
+                if (!e.target.closest('.context-menu')) {
                     hideContextMenu();
                 }
             });
@@ -426,6 +444,9 @@
                 return;
             }
             
+            const apiKey = await getApiKey();
+            if (!apiKey) return; // Detener si el usuario no proporciona una clave
+
             resetMapData();
             document.querySelector('.loading').style.display = 'flex';
 
@@ -458,7 +479,7 @@
             };
 
             try {
-                const mapData = await callGeminiAPI(structuredPrompt, jsonSchema);
+                const mapData = await callGeminiAPI(apiKey, structuredPrompt, jsonSchema);
                 const themedNodes = mapData.nodes.map(node => ({
                     ...node,
                     ...getNodeColor(node.level),
@@ -487,6 +508,9 @@
          */
         async function expandNodeWithAI() {
             if (!selectedNode) return;
+            
+            const apiKey = await getApiKey();
+            if (!apiKey) return;
 
             const parentNode = nodes.get(selectedNode);
             document.querySelector('.loading').style.display = 'flex';
@@ -508,7 +532,7 @@
             };
 
             try {
-                const result = await callGeminiAPI(structuredPrompt, jsonSchema);
+                const result = await callGeminiAPI(apiKey, structuredPrompt, jsonSchema);
                 const childLevel = (parentNode.level || 0) + 1;
                 
                 result.nuevas_ideas.forEach(idea => {
@@ -532,8 +556,7 @@
         /**
          * Función genérica para llamar a la API de Gemini.
          */
-        async function callGeminiAPI(prompt, schema) {
-            const apiKey = ""; // La API Key se inyectará en el entorno de ejecución. No es necesario añadirla aquí.
+        async function callGeminiAPI(apiKey, prompt, schema) {
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -674,10 +697,52 @@
 
         // --- PERSISTENCIA Y GESTIÓN DE DATOS ---
 
+        async function getApiKey() {
+            let apiKey = localStorage.getItem('geminiApiKey');
+            if (apiKey) return apiKey;
+
+            const { value: inputApiKey } = await Swal.fire({
+                title: 'Se necesita una Clave de API',
+                html: `
+                    <div style="text-align:left; line-height:1.4;">
+                        Para usar las funciones de IA, necesitas una clave de API de Google AI Studio.
+                        <br/><br/>
+                        1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.
+                        <br/>
+                        2. Haz clic en "Create API key" y cópiala.
+                        <br/>
+                        3. Pega la clave aquí abajo.
+                        <br/><br/>
+                        Tu clave se guardará en tu navegador para futuras sesiones.
+                    </div>`,
+                input: 'password',
+                inputPlaceholder: 'Pega tu clave de API aquí',
+                confirmButtonText: 'Guardar Clave',
+                showCancelButton: true,
+                cancelButtonText: 'Usar sin IA',
+                allowOutsideClick: false,
+                ...getSwalTheme(),
+                inputValidator: (value) => {
+                    if (!value) {
+                        return '¡Necesitas ingresar una clave de API!';
+                    }
+                }
+            });
+
+            if (inputApiKey) {
+                localStorage.setItem('geminiApiKey', inputApiKey);
+                showToast('success', 'Clave guardada', 'Ahora puedes usar las funciones de IA.');
+                return inputApiKey;
+            } else {
+                showToast('info', 'Funciones de IA desactivadas', 'Puedes añadir tu clave desde la Ayuda.');
+                return null;
+            }
+        }
+
         function saveMapToLocalStorage() {
             if (nodes.length > 0) {
                 const mapData = {
-                    nodes: nodes.get({ fields: ['id', 'label', 'level', 'color', 'font'] }),
+                    nodes: nodes.get({ fields: ['id', 'label', 'level', 'x', 'y', 'color', 'font'] }),
                     edges: edges.get(),
                     nodeIdCounter: nodeIdCounter
                 };
@@ -696,7 +761,7 @@
                     edges.add(mapData.edges);
                     nodeIdCounter = mapData.nodeIdCounter || (Math.max(-1, ...mapData.nodes.map(n => n.id)) + 1);
                     document.getElementById('mindmap').classList.add('has-content');
-                    network.fit();
+                    // No hacemos fit() para mantener la posición guardada
                     showToast('info', 'Mapa cargado', 'Se ha restaurado tu sesión anterior.');
                 } catch(e) {
                     console.error("Error al cargar datos locales, reiniciando.", e);
@@ -710,6 +775,8 @@
                 showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
                 return;
             }
+             // Guardar posiciones actuales antes de exportar
+            network.storePositions();
             const mapData = {
                 nodes: nodes.get(),
                 edges: edges.get(),
@@ -820,6 +887,47 @@
         }
 
         // --- UTILIDADES Y UI HELPERS ---
+        
+        /**
+         * Muestra la ventana modal de ayuda con las instrucciones de la aplicación.
+         */
+        function showHelpModal() {
+            Swal.fire({
+                title: 'Guía de Ayuda de MindFlow',
+                html: `
+                    <div class="help-content">
+                        <h2>🔑 Clave de API de IA</h2>
+                        <p>Para usar las funciones de IA, necesitas una clave de API gratuita de Google. Tu clave se guarda <strong>solo en tu navegador</strong> y no se comparte.</p>
+                        <ul>
+                            <li><a href="https://aistudio.google.com/app/apikey" target="_blank">Obtén tu clave de API aquí.</a></li>
+                            <li><a href="#" onclick="getApiKey()">Ingresar o cambiar mi clave de API.</a></li>
+                        </ul>
+
+                        <h2>🤖 Funciones con IA</h2>
+                        <ul>
+                            <li><strong>Generar MindFlow:</strong> Escribe una idea y la IA creará el mapa por ti.</li>
+                            <li><strong>Expandir con IA:</strong> Haz clic derecho en un nodo y selecciona '🧠 Expandir con IA' para añadir sub-ideas.</li>
+                        </ul>
+
+                        <h2>✍️ Edición Manual (Menú Clic Derecho)</h2>
+                        <ul>
+                             <li><strong>Editar/Añadir Icono:</strong> Haz doble clic en un nodo para editar su texto y emoji.</li>
+                             <li><strong>Añadir Hijo:</strong> Crea un nuevo nodo conectado al seleccionado.</li>
+                        </ul>
+
+                        <h2>⚙️ Controles Generales</h2>
+                        <ul>
+                            <li><strong>Importar/Exportar JSON:</strong> Guarda y carga tu trabajo en archivos <code>.json</code>.</li>
+                            <li><strong>Exportar PNG:</strong> Guarda una imagen de tu mapa mental.</li>
+                            <li><strong>Persistencia Automática:</strong> Tu trabajo se guarda en el navegador. ¡Si recargas, tu mapa seguirá aquí!</li>
+                        </ul>
+                    </div>
+                `,
+                width: '80%',
+                ...getSwalTheme()
+            });
+        }
+
         function exportPNG() {
             if (nodes.length === 0) {
                 showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
@@ -876,7 +984,7 @@
         function updateSelection(nodeIds) {
             const indicator = document.getElementById('selectionIndicator');
             if (nodeIds.length > 0) {
-                const nodeText = nodeIds.length === 1 ? `Nodo: "${nodes.get(nodeIds[0]).label}"` : `${nodeIds.length} nodos`;
+                const nodeText = nodeIds.length === 1 ? `"${nodes.get(nodeIds[0]).label}"` : `${nodeIds.length} nodos`;
                 indicator.textContent = `Seleccionado: ${nodeText}`;
                 indicator.classList.add('show');
             } else {
@@ -896,44 +1004,6 @@
         }
         function getSwalTheme() { return { background: '#1e1b4b', color: '#f8fafc', confirmButtonColor: '#6366f1', cancelButtonColor: '#6b7280' }; }
         
-        // --- FUNCIÓN DE AYUDA ---
-        function showHelpModal() {
-            const helpHtml = `
-            <div class="help-content">
-                <h2>🤖 Funciones con IA</h2>
-                <ul>
-                    <li><strong>Generar MindFlow:</strong> Escribe una idea central y la IA creará un mapa mental completo para ti.</li>
-                    <li><strong>Expandir con IA:</strong> Haz clic derecho en un nodo y selecciona '🧠 Expandir con IA' para generar ideas secundarias automáticamente.</li>
-                </ul>
-
-                <h2>✍️ Edición Manual (Menú Clic Derecho)</h2>
-                <ul>
-                    <li><strong>Editar Nodo:</strong> Cambia el texto de cualquier nodo. También puedes hacer doble clic.</li>
-                    <li><strong>Añadir Hijo:</strong> Crea un nuevo nodo conectado al que seleccionaste.</li>
-                    <li><strong>Añadir Icono/Emoji:</strong> Personaliza tus nodos con emojis para hacerlos más visuales.</li>
-                    <li><strong>Cambiar Color:</strong> Elige un color específico para un nodo.</li>
-                    <li><strong>Eliminar:</strong> Borra el nodo seleccionado y sus conexiones.</li>
-                </ul>
-
-                <h2>⚙️ Controles Generales</h2>
-                <ul>
-                    <li><strong>Importar/Exportar JSON:</strong> Guarda tu trabajo en un archivo <code>.json</code> o carga uno existente. ¡Ideal para copias de seguridad!</li>
-                    <li><strong>Exportar PNG:</strong> Guarda una imagen de alta calidad de tu mapa mental.</li>
-                    <li><strong>Reiniciar:</strong> Borra todo el mapa y empieza de cero.</li>
-                    <li><strong>Física ON/OFF:</strong> Activa o desactiva la organización automática de nodos. Desactívala para colocar los nodos manualmente con precisión antes de exportar.</li>
-                    <li><strong>Persistencia Automática:</strong> ¡Tu trabajo se guarda en el navegador! Si recargas la página, tu mapa seguirá aquí.</li>
-                </ul>
-            </div>
-            `;
-
-            Swal.fire({
-                title: 'Guía de Ayuda de MindFlow',
-                html: helpHtml,
-                width: '80%',
-                ...getSwalTheme()
-            });
-        }
-
         // --- INICIALIZACIÓN DE LA APLICACIÓN ---
         window.onload = () => {
             initNetwork();

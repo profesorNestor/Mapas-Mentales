@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindFlow Pro - Generador de Mapas Mentales con IA</title>
+    <title>MindFlow Pro - Generador de Mapas Mentales Multi-IA</title>
     
     <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -80,17 +79,12 @@
             50% { filter: brightness(1.2); }
         }
         .header p { color: #a5b4fc; font-size: 1.2rem; }
-        
-        /* Botón de Ayuda */
         .help-btn {
             position: absolute;
             top: 1.5rem;
             right: 1.5rem;
-            padding: 0.6rem 1.2rem;
-            font-size: 0.9rem;
-            border-radius: 25px;
         }
-
+        
         /* Controles Principales (Input y botón de generar) */
         .controls {
             display: flex;
@@ -154,7 +148,7 @@
         .options { display: flex; gap: 1rem; justify-content: center; margin: 1rem auto; padding: 0 2rem; flex-wrap: wrap; }
         .option-group { display: flex; gap: 0.5rem; align-items: center; background: rgba(255, 255, 255, 0.05); padding: 0.5rem 1rem; border-radius: 25px; backdrop-filter: blur(10px); }
         .option-group label { font-size: 0.9rem; color: #a5b4fc; }
-        select, input[type="color"] { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; cursor: pointer; }
+        select { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 0.3rem 0.8rem; border-radius: 15px; cursor: pointer; }
         select option { background: var(--dark); }
 
         /* Contenedor del Mapa Mental */
@@ -197,7 +191,7 @@
             backdrop-filter: blur(10px); border: 1px solid var(--primary);
             border-radius: 10px; padding: 0.5rem 0; z-index: 1000;
             display: none; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            width: 200px;
+            width: 220px;
         }
         .context-menu-item {
             padding: 0.7rem 1.2rem; cursor: pointer; color: var(--light);
@@ -238,41 +232,81 @@
 
         /* Input de archivo oculto para importación */
         #importFileInput { display: none; }
-
-        /* Estilos para el modal de ayuda */
-        .help-content {
-            text-align: left;
-            padding: 0 1rem;
+        
+        /* Estilos para el modal de ayuda y config */
+        .swal-content-container {
+            text-align: left; padding: 0 1rem;
         }
-        .help-content h2 {
-            color: var(--accent);
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            border-bottom: 1px solid var(--secondary);
-            padding-bottom: 0.3rem;
+        .swal-content-container h2 {
+            color: var(--accent); margin-top: 1.5rem; margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--secondary); padding-bottom: 0.3rem;
         }
-        .help-content ul {
-            list-style-position: inside;
-            padding-left: 0.5rem;
+        .swal-content-container ul { list-style-position: inside; padding-left: 0.5rem; }
+        .swal-content-container li { margin-bottom: 0.5rem; line-height: 1.4; }
+        .swal-content-container code {
+            background-color: rgba(255,255,255,0.1); padding: 0.2em 0.4em;
+            border-radius: 3px; font-family: monospace;
         }
-        .help-content li {
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
+        .swal-content-container a { color: var(--accent); text-decoration: none; }
+        .swal-content-container a:hover { text-decoration: underline; }
+        .api-key-input-group { margin-bottom: 1rem; }
+        .api-key-input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--secondary); }
+        .swal2-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            border: 1px solid var(--secondary);
+            border-radius: 5px;
         }
-        .help-content code {
-            background-color: rgba(255,255,255,0.1);
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-family: monospace;
-        }
-        .help-content a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-        .help-content a:hover {
-            text-decoration: underline;
-        }
-
+        
+        /* Estilos de la librería Vis.js */
+        .vis-network{position:relative;overflow:hidden;touch-action:pan-y}
+        .vis-network *{box-sizing:border-box}
+        .vis-network canvas{position:relative;left:0;top:0;height:100%;width:100%;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;touch-action:pan-y}
+        .vis-network canvas:focus{outline:0}
+        .vis-network .vis-zoom-and-pan-buttons{position:absolute;bottom:0;left:0;z-index:1}
+        .vis-network .vis-zoom-and-pan-buttons button{display:inline-block;width:34px;height:34px;font-size:24px;background-color:#fff;border:none;border-radius:0 3px 0 0;cursor:pointer}
+        .vis-network .vis-zoom-and-pan-buttons button:hover{background-color:#eee}
+        .vis-network .vis-tooltip{position:absolute;visibility:hidden;padding:5px;white-space:nowrap;font-family:verdana;font-size:14px;color:#000;background-color:#fff;border:1px solid #868686;border-radius:3px;box-shadow:2px 2px 10px rgba(134,134,134,.4);pointer-events:none;z-index:5}
+        .vis-network .vis-manipulation{position:absolute;top:0;left:0;z-index:2}
+        .vis-network .vis-manipulation .vis-button{display:inline-block;width:34px;height:34px;font-family:fontawesome;font-size:24px;text-align:center;color:#333;background-color:#fff;border:none;border-bottom:1px solid #ccc;cursor:pointer}
+        .vis-network .vis-manipulation .vis-button:hover{box-shadow:0 0 3px 3px #eee}
+        .vis-network .vis-manipulation .vis-button.vis-selected{background-color:#eee}
+        .vis-network .vis-manipulation .vis-button.vis-add{border-radius:3px 0 0}
+        .vis-network .vis-manipulation .vis-button.vis-delete{border-radius:0 3px 0 0}
+        .vis-network .vis-manipulation .vis-button.vis-back{border-radius:3px}
+        .vis-network .vis-manipulation .vis-label{display:inline-block;margin-left:10px}
+        .vis-network .vis-manipulation .vis-separator-line{display:inline-block;width:1px;height:25px;margin:5px;background-color:#ccc}
+        .vis-network .vis-edit-mode .vis-label{display:inline-block;margin-left:10px}
+        .vis-network .vis-edit-mode .vis-button{width:auto;padding:5px 10px;border-radius:3px}
+        .vis-network .vis-close{position:absolute;top:0;right:0;width:34px;height:34px;font-family:fontawesome;font-size:24px;text-align:center;color:#333;background-color:#fff;border:none;border-radius:0 0 0 3px;cursor:pointer}
+        .vis-network .vis-close:hover{box-shadow:0 0 3px 3px #eee}
+        div.vis-network-tooltip{font-family:sans-serif}
+        table.vis-network-tooltip{border-collapse:collapse}
+        table.vis-network-tooltip,table.vis-network-tooltip td{border:0 solid #d3d3d3;margin:0;padding:3px}
+        .vis-network-tooltip-header{font-weight:700}
+        div.vis-navigation div.vis-button{position:absolute;font-family:fontawesome;color:#555;font-size:35px;cursor:pointer;display:inline-block;width:50px;height:50px;text-align:center;padding:5px;border-radius:50px}
+        div.vis-navigation div.vis-button:hover{box-shadow:0 0 10px 10px rgba(150,150,150,.2)}
+        div.vis-navigation div.vis-button:active{box-shadow:0 0 10px 10px rgba(150,150,150,.4)}
+        div.vis-navigation div.vis-button.vis-up{bottom:50px;left:50%;margin-left:-25px}
+        div.vis-navigation div.vis-button.vis-down{bottom:0;left:50%;margin-left:-25px}
+        div.vis-navigation div.vis-button.vis-left{bottom:25px;left:50%;margin-left:-75px}
+        div.vis-navigation div.vis-button.vis-right{bottom:25px;left:50%;margin-left:25px}
+        div.vis-navigation div.vis-button.vis-zoom-in{bottom:0;right:0}
+        div.vis-navigation div.vis-button.vis-zoom-out{bottom:0;right:50px}
+        div.vis-navigation div.vis-button.vis-zoom-extents{bottom:100px;left:50%;margin-left:-25px}
+        .vis-configuration-wrapper{position:absolute;bottom:0;left:0;right:0;font-family:sans-serif;background:#fff;padding:10px;border:1px solid #d3d3d3;box-shadow:2px 2px 20px rgba(134,134,134,.4)}
+        .vis-configuration-wrapper .vis-config-header{font-weight:700;font-size:16px;padding-bottom:10px;border-bottom:1px solid #d3d3d3}
+        .vis-configuration-wrapper .vis-config-item{padding-top:10px}
+        .vis-configuration-wrapper .vis-config-item>input[type=checkbox]{display:inline-block}
+        .vis-configuration-wrapper .vis-config-item>input[type=range],.vis-configuration-wrapper .vis-config-item>label{display:inline-block;padding-left:10px}
+        .vis-configuration-wrapper .vis-config-item .vis-config-rangeinput{width:100px}
+        .vis-configuration-wrapper .vis-config-item .vis-config-colorinput{width:50px}
+        .vis-configuration-wrapper .vis-config-item.vis-config-range>label:after{content:attr(data-value)}
+        .vis-configuration-wrapper .vis-config-item .vis-config-button{margin-left:10px}
+        .vis-configuration-wrapper .vis-config-item .vis-config-select{display:inline-block;margin-left:10px}
+        .vis-configuration-wrapper .vis-config-item .vis-config-label{padding-right:10px}
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -289,8 +323,8 @@
     
     <header class="header">
         <h1>MindFlow Pro</h1>
-        <p>Transforma tus ideas en mapas mentales interactivos con IA</p>
-        <button class="btn btn-info help-btn" onclick="showHelpModal()">❓ Ayuda</button>
+        <p>Transforma tus ideas en mapas mentales con IA</p>
+        <button class="btn btn-info small-btn help-btn" onclick="showHelpModal()">❓ Ayuda</button>
     </header>
     
     <div class="controls">
@@ -304,7 +338,16 @@
     
     <div class="options">
         <div class="option-group">
-            <label>Tema:</label>
+            <label for="aiProvider">Proveedor IA:</label>
+            <select id="aiProvider">
+                <option value="gemini">Google (Gemini)</option>
+                <option value="mistral">Mistral</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="openrouter">OpenRouter</option>
+            </select>
+        </div>
+        <div class="option-group">
+            <label for="themeSelect">Tema:</label>
             <select id="themeSelect" onchange="updateTheme()">
                 <option value="cosmic">Cósmico</option>
                 <option value="nature">Natural</option>
@@ -313,35 +356,31 @@
             </select>
         </div>
         <div class="option-group">
-            <label>Disposición:</label>
+            <label for="layoutSelect">Disposición:</label>
             <select id="layoutSelect" onchange="updateLayout()">
                 <option value="hierarchical">Jerárquico</option>
                 <option value="radial">Radial</option>
             </select>
-        </div>
-        <div class="option-group">
-            <label>Color Ppal:</label>
-            <input type="color" id="colorPicker" value="#6366f1" onchange="updateColors()">
         </div>
     </div>
     
     <div id="mindmap"></div>
     
     <div class="action-buttons">
-        <button class="btn btn-secondary small-btn" onclick="document.getElementById('importFileInput').click()">📂 Importar JSON</button>
-        <button class="btn btn-secondary small-btn" onclick="exportJSON()">💾 Exportar JSON</button>
-        <button class="btn btn-secondary small-btn" onclick="exportPNG()">📷 Exportar PNG</button>
-        <button class="btn btn-info small-btn" onclick="togglePhysics()">⚛️ Física ON/OFF</button>
+        <button class="btn btn-success small-btn" onclick="addNode()">➕ Añadir Nodo</button>
+        <button class="btn btn-secondary small-btn" onclick="document.getElementById('importFileInput').click()">📂 Importar</button>
+        <button class="btn btn-secondary small-btn" onclick="exportJSON()">💾 Exportar</button>
+        <button class="btn btn-secondary small-btn" onclick="exportPNG()">📷 Capturar</button>
         <button class="btn btn-danger small-btn" onclick="resetMap()">🔄 Reiniciar</button>
     </div>
     
     <!-- Menú contextual (inicialmente oculto) -->
     <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="addNode()">➕ Añadir Nodo</div>
         <div class="context-menu-item" onclick="editSelectedNode()">✏️ Editar Nodo</div>
         <div class="context-menu-item" onclick="addChildNode()">➕ Añadir Hijo</div>
         <div class="context-menu-item" onclick="expandNodeWithAI()">🧠 Expandir con IA</div>
         <div class="context-menu-item" onclick="addIconToNode()">🙂 Añadir Icono/Emoji</div>
-        <div class="context-menu-item" onclick="changeNodeColor()">🎨 Cambiar Color</div>
         <div class="context-menu-item danger" onclick="deleteSelectedNode()">🗑️ Eliminar</div>
     </div>
     
@@ -356,7 +395,6 @@
         let edges = new vis.DataSet();
         let nodeIdCounter = 0;
         let selectedNode = null;
-        let physicsEnabled = true;
         
         // --- TEMAS Y CONFIGURACIÓN VISUAL ---
         const themes = {
@@ -376,7 +414,8 @@
                     shape: 'box', borderWidth: 2, borderWidthSelected: 3,
                     font: { size: 16, face: 'Segoe UI, Arial, sans-serif' },
                     shadow: { enabled: true, size: 10, x: 5, y: 5 },
-                    mass: 1.5
+                    mass: 1.5,
+                    margin: { top: 10, right: 15, bottom: 10, left: 15 }
                 },
                 edges: {
                     width: 2,
@@ -404,7 +443,6 @@
             network.on('doubleClick', params => {
                 if (params.nodes.length > 0) editNode(params.nodes[0]);
             });
-
             network.on('oncontext', params => {
                 params.event.preventDefault();
                 hideContextMenu();
@@ -414,29 +452,19 @@
                     showContextMenu(params.event.clientX, params.event.clientY);
                 }
             });
-
             network.on('click', params => {
                 hideContextMenu();
                 updateSelection(params.nodes);
             });
-            
-            // Guardar automáticamente al arrastrar un nodo
             network.on('dragEnd', () => saveMapToLocalStorage());
-
             document.addEventListener('click', e => {
-                if (!e.target.closest('.context-menu')) {
-                    hideContextMenu();
-                }
+                if (!e.target.closest('.context-menu')) hideContextMenu();
             });
-            
             document.addEventListener('keydown', handleKeyboardShortcuts);
         }
 
-        // --- LÓGICA DE LA IA (GEMINI API) ---
+        // --- LÓGICA DE LA IA (GEMINI, MISTRAL, DEEPSEEK) ---
         
-        /**
-         * Genera un mapa mental completo basado en el prompt del usuario.
-         */
         async function generateMindMap() {
             const userPrompt = document.getElementById('promptInput').value.trim();
             if (!userPrompt) {
@@ -444,42 +472,13 @@
                 return;
             }
             
-            const apiKey = await getApiKey();
-            if (!apiKey) return; // Detener si el usuario no proporciona una clave
-
             resetMapData();
             document.querySelector('.loading').style.display = 'flex';
-
-            const structuredPrompt = `Eres un experto creando mapas mentales claros y concisos. Basado en el tema central "${userPrompt}", genera una estructura de mapa mental. El mapa debe tener un nodo central (nivel 0), varios nodos principales (nivel 1) y algunos sub-nodos (nivel 2). Devuelve la respuesta EXCLUSIVAMENTE en formato JSON, siguiendo el esquema proporcionado. El nodo con id 0 debe ser el nodo central con el tema "${userPrompt}". Asegúrate de que los IDs sean únicos y secuenciales empezando en 0. No incluyas explicaciones ni texto adicional, solo el objeto JSON.`;
-            const jsonSchema = {
-                type: "OBJECT",
-                properties: {
-                    "nodes": {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "id": { "type": "NUMBER" },
-                                "label": { "type": "STRING" },
-                                "level": { "type": "NUMBER" }
-                            },
-                            required: ["id", "label", "level"]
-                        }
-                    },
-                    "edges": {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: { "from": { "type": "NUMBER" }, "to": { "type": "NUMBER" } },
-                            required: ["from", "to"]
-                        }
-                    }
-                },
-                required: ["nodes", "edges"]
-            };
+            
+            const structuredPrompt = `Eres un experto creando mapas mentales claros y concisos. Basado en el tema central "${userPrompt}", genera una estructura de mapa mental. El mapa debe tener un nodo central (nivel 0), varios nodos principales (nivel 1) y algunos sub-nodos (nivel 2). Devuelve la respuesta EXCLUSIVAMENTE en formato JSON, siguiendo el esquema: {"nodes": [{"id": <number>, "label": "<string>", "level": <number>}], "edges": [{"from": <number>, "to": <number>}]}. El nodo con id 0 debe ser el nodo central. Los IDs deben ser únicos y secuenciales empezando en 0. No incluyas explicaciones ni texto adicional, solo el objeto JSON.`;
 
             try {
-                const mapData = await callGeminiAPI(apiKey, structuredPrompt, jsonSchema);
+                const mapData = await callSelectedAI(structuredPrompt);
                 const themedNodes = mapData.nodes.map(node => ({
                     ...node,
                     ...getNodeColor(node.level),
@@ -497,42 +496,21 @@
                 saveMapToLocalStorage();
             } catch (error) {
                 console.error("Error al generar el mapa mental:", error);
-                showToast('error', 'Error de Generación', 'No se pudo crear el mapa. Revisa la consola para más detalles.');
+                showToast('error', 'Error de Generación', error.message);
             } finally {
                 document.querySelector('.loading').style.display = 'none';
             }
         }
 
-        /**
-         * Expande un nodo seleccionado con ideas generadas por la IA.
-         */
         async function expandNodeWithAI() {
             if (!selectedNode) return;
-            
-            const apiKey = await getApiKey();
-            if (!apiKey) return;
-
-            const parentNode = nodes.get(selectedNode);
             document.querySelector('.loading').style.display = 'flex';
-
-            const structuredPrompt = `Eres un asistente creativo de mapas mentales. Para el concepto central "${parentNode.label}", genera entre 3 y 5 ideas o sub-temas relacionados para expandirlo. Devuelve la respuesta EXCLUSIVAMENTE en formato JSON con una lista de los nuevos conceptos. El JSON debe seguir el esquema proporcionado. No incluyas el nodo padre en la respuesta, solo los nuevos nodos hijos.`;
-            const jsonSchema = {
-                type: "OBJECT",
-                properties: {
-                    "nuevas_ideas": {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: { "label": { type: "STRING" } },
-                            required: ["label"]
-                        }
-                    }
-                },
-                required: ["nuevas_ideas"]
-            };
+            
+            const parentNode = nodes.get(selectedNode);
+            const structuredPrompt = `Eres un asistente creativo de mapas mentales. Para el concepto central "${parentNode.label}", genera entre 3 y 5 ideas o sub-temas relacionados para expandirlo. Devuelve la respuesta EXCLUSIVAMENTE en formato JSON con una lista de los nuevos conceptos. El JSON debe seguir el esquema {"nuevas_ideas": [{"label": "<string>"}]}. No incluyas el nodo padre, solo los nuevos hijos.`;
 
             try {
-                const result = await callGeminiAPI(apiKey, structuredPrompt, jsonSchema);
+                const result = await callSelectedAI(structuredPrompt, true);
                 const childLevel = (parentNode.level || 0) + 1;
                 
                 result.nuevas_ideas.forEach(idea => {
@@ -544,67 +522,110 @@
                 showToast('success', 'Nodo expandido', `Se añadieron ${result.nuevas_ideas.length} ideas nuevas.`);
                 saveMapToLocalStorage();
                 network.fit({ nodes: [selectedNode], animation: true });
-
             } catch (error) {
-                 console.error("Error al expandir el nodo con IA:", error);
-                showToast('error', 'Error de Expansión', 'No se pudieron generar las ideas.');
+                 console.error("Error al expandir el nodo:", error);
+                showToast('error', 'Error de Expansión', error.message);
             } finally {
                 document.querySelector('.loading').style.display = 'none';
             }
         }
 
-        /**
-         * Función genérica para llamar a la API de Gemini.
-         */
-        async function callGeminiAPI(apiKey, prompt, schema) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema
-                }
-            };
+        // --- ADAPTADOR DE API ---
+        async function callSelectedAI(prompt, forExpansion = false) {
+            const provider = document.getElementById('aiProvider').value;
+            const apiKey = await getApiKey(provider);
+            if (!apiKey) throw new Error(`API Key para ${provider} no encontrada.`);
 
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const schema = forExpansion ? 
+                { type: "OBJECT", properties: { "nuevas_ideas": { type: "ARRAY", items: { type: "OBJECT", properties: { "label": { type: "STRING" } }, required: ["label"] } } }, required: ["nuevas_ideas"] } :
+                { type: "OBJECT", properties: { "nodes": { type: "ARRAY", items: { type: "OBJECT", properties: { "id": { "type": "NUMBER" }, "label": { "type": "STRING" }, "level": { "type": "NUMBER" } }, required: ["id", "label", "level"] } }, "edges": { type: "ARRAY", items: { type: "OBJECT", properties: { "from": { "type": "NUMBER" }, "to": { "type": "NUMBER" } }, required: ["from", "to"] } } }, required: ["nodes", "edges"] };
 
+            let endpoint = '';
+            let payload = {};
+            let headers = { 'Content-Type': 'application/json' };
+
+            switch (provider) {
+                case 'gemini':
+                    endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                    payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: schema } };
+                    break;
+                case 'mistral':
+                    endpoint = 'https://api.mistral.ai/v1/chat/completions';
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                    payload = { model: "mistral-large-latest", messages: [{ role: "user", content: prompt }], response_format: { type: "json_object" } };
+                    break;
+                case 'deepseek':
+                    // FIX: Route DeepSeek requests through OpenRouter to use OpenRouter keys.
+                    endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                    payload = { model: "deepseek/deepseek-chat", messages: [{ role: "user", content: prompt }] };
+                    break;
+                case 'openrouter':
+                    endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                    const modelName = localStorage.getItem('openrouterModelName') || 'google/gemini-flash-1.5'; // Default model
+                    payload = { model: modelName, messages: [{ role: "user", content: prompt }] };
+                    // OpenRouter doesn't support response_format, so we rely on clear prompting.
+                    break;
+                default:
+                    throw new Error("Proveedor de IA no válido.");
+            }
+
+            const response = await fetch(endpoint, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
             if (!response.ok) {
                 const errorBody = await response.json();
                 console.error("API Error Response:", errorBody);
-                throw new Error(`Error de la API: ${response.statusText}`);
+                throw new Error(`Error de API de ${provider}: ${errorBody.error?.message || response.statusText}`);
             }
 
             const result = await response.json();
-            
-            if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-                throw new Error("Respuesta inesperada o vacía de la API.");
+            let content = '';
+
+            // Extract the JSON content from the response according to the provider's format
+            if (provider === 'gemini') {
+                content = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            } else if (['mistral', 'deepseek', 'openrouter'].includes(provider)) {
+                 content = result.choices?.[0]?.message?.content;
             }
 
-            return JSON.parse(result.candidates[0].content.parts[0].text);
+
+            if (!content) throw new Error("Respuesta inesperada o vacía de la API.");
+            
+            try {
+                // Clean the JSON if it's wrapped in markdown code blocks
+                const cleanedContent = content.replace(/^```json\s*|```\s*$/g, '');
+                return JSON.parse(cleanedContent);
+            } catch (e) {
+                console.error("Failed to parse JSON, original content:", content);
+                throw new Error("La IA no devolvió un JSON válido.");
+            }
         }
 
         // --- MANIPULACIÓN DE NODOS Y ARISTAS (MANUAL) ---
         async function addNode() {
             const { value: label } = await Swal.fire({
-                title: 'Añadir Nuevo Nodo', input: 'text', inputPlaceholder: 'Texto del nuevo nodo...',
-                showCancelButton: true, confirmButtonText: 'Crear Nodo', ...getSwalTheme()
+                title: 'Añadir Nuevo Nodo',
+                input: 'text',
+                inputPlaceholder: 'Texto del nuevo nodo...',
+                showCancelButton: true,
+                confirmButtonText: 'Crear Nodo',
+                ...getSwalTheme()
             });
+
             if (label) {
                 const newId = nodeIdCounter++;
                 const parentSelection = network.getSelectedNodes();
                 const level = parentSelection.length > 0 ? (nodes.get(parentSelection[0]).level || 0) + 1 : 0;
                 
-                nodes.add({ id: newId, label, level, ...getNodeColor(level) });
+                nodes.add({ id: newId, label: label, level: level, ...getNodeColor(level) });
 
                 if (parentSelection.length > 0) {
-                    edges.add({from: parentSelection[0], to: newId});
+                    edges.add({ from: parentSelection[0], to: newId });
                 }
                 
-                if (nodes.length === 1) document.getElementById('mindmap').classList.add('has-content');
+                if (nodes.length === 1) {
+                    document.getElementById('mindmap').classList.add('has-content');
+                }
                 saveMapToLocalStorage();
             }
         }
@@ -650,7 +671,6 @@
             }).then(result => {
                 if (result.isConfirmed) {
                     nodes.remove(selection.nodes);
-                    // vis-network se encarga de las aristas conectadas
                     if (nodes.length === 0) document.getElementById('mindmap').classList.remove('has-content');
                     saveMapToLocalStorage();
                 }
@@ -661,14 +681,10 @@
             if(!selectedNode) return;
             const node = nodes.get(selectedNode);
             const { value: emoji } = await Swal.fire({
-                title: 'Añadir Icono/Emoji',
-                input: 'text',
-                inputPlaceholder: 'Pega un emoji aquí (ej: ✨)',
-                ...getSwalTheme()
+                title: 'Añadir Icono/Emoji', input: 'text',
+                inputPlaceholder: 'Pega un emoji aquí (ej: ✨)', ...getSwalTheme()
             });
-
             if (emoji) {
-                // Elimina emojis anteriores para no acumularlos
                 const plainLabel = node.label.replace(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/gu, '').trim();
                 nodes.update({ id: selectedNode, label: `${emoji} ${plainLabel}` });
                 saveMapToLocalStorage();
@@ -678,69 +694,53 @@
         function handleKeyboardShortcuts(event) {
             if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
             switch(event.key) {
-                case 'Delete':
-                case 'Backspace':
-                    event.preventDefault();
-                    deleteSelectedNodes();
-                    break;
+                case 'Delete': case 'Backspace':
+                    event.preventDefault(); deleteSelectedNodes(); break;
                 case 'Escape':
-                    network.unselectAll();
-                    break;
+                    network.unselectAll(); break;
                 case 'Enter':
                     if (network.getSelectedNodes().length === 1) {
-                        event.preventDefault();
-                        editNode(network.getSelectedNodes()[0]);
+                        event.preventDefault(); editNode(network.getSelectedNodes()[0]);
                     }
                     break;
             }
         }
 
         // --- PERSISTENCIA Y GESTIÓN DE DATOS ---
-
-        async function getApiKey() {
-            let apiKey = localStorage.getItem('geminiApiKey');
+        
+        async function getApiKey(provider) {
+            // The DeepSeek provider now uses the OpenRouter key
+            const keyProvider = provider === 'deepseek' ? 'openrouter' : provider;
+            const keyName = `${keyProvider}ApiKey`;
+            let apiKey = localStorage.getItem(keyName);
             if (apiKey) return apiKey;
 
             const { value: inputApiKey } = await Swal.fire({
-                title: 'Se necesita una Clave de API',
-                html: `
-                    <div style="text-align:left; line-height:1.4;">
-                        Para usar las funciones de IA, necesitas una clave de API de Google AI Studio.
-                        <br/><br/>
-                        1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.
-                        <br/>
-                        2. Haz clic en "Create API key" y cópiala.
-                        <br/>
-                        3. Pega la clave aquí abajo.
-                        <br/><br/>
-                        Tu clave se guardará en tu navegador para futuras sesiones.
-                    </div>`,
+                title: `Configurar API Key para ${keyProvider.charAt(0).toUpperCase() + keyProvider.slice(1)}`,
+                html: `Se necesita una clave de API para usar esta función. Se guardará en tu navegador.`,
                 input: 'password',
                 inputPlaceholder: 'Pega tu clave de API aquí',
                 confirmButtonText: 'Guardar Clave',
                 showCancelButton: true,
-                cancelButtonText: 'Usar sin IA',
+                cancelButtonText: 'Cancelar',
                 allowOutsideClick: false,
                 ...getSwalTheme(),
-                inputValidator: (value) => {
-                    if (!value) {
-                        return '¡Necesitas ingresar una clave de API!';
-                    }
-                }
+                inputValidator: (value) => !value && '¡Necesitas ingresar una clave de API!'
             });
 
             if (inputApiKey) {
-                localStorage.setItem('geminiApiKey', inputApiKey);
-                showToast('success', 'Clave guardada', 'Ahora puedes usar las funciones de IA.');
+                localStorage.setItem(keyName, inputApiKey);
+                showToast('success', 'Clave guardada', `Ahora puedes usar ${provider}.`);
                 return inputApiKey;
             } else {
-                showToast('info', 'Funciones de IA desactivadas', 'Puedes añadir tu clave desde la Ayuda.');
+                showToast('info', 'Función cancelada', 'Puedes configurar la clave desde la Ayuda.');
                 return null;
             }
         }
 
         function saveMapToLocalStorage() {
             if (nodes.length > 0) {
+                network.storePositions();
                 const mapData = {
                     nodes: nodes.get({ fields: ['id', 'label', 'level', 'x', 'y', 'color', 'font'] }),
                     edges: edges.get(),
@@ -761,7 +761,6 @@
                     edges.add(mapData.edges);
                     nodeIdCounter = mapData.nodeIdCounter || (Math.max(-1, ...mapData.nodes.map(n => n.id)) + 1);
                     document.getElementById('mindmap').classList.add('has-content');
-                    // No hacemos fit() para mantener la posición guardada
                     showToast('info', 'Mapa cargado', 'Se ha restaurado tu sesión anterior.');
                 } catch(e) {
                     console.error("Error al cargar datos locales, reiniciando.", e);
@@ -771,17 +770,9 @@
         }
 
         function exportJSON() {
-            if (nodes.length === 0) {
-                showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
-                return;
-            }
-             // Guardar posiciones actuales antes de exportar
+            if (nodes.length === 0) return showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
             network.storePositions();
-            const mapData = {
-                nodes: nodes.get(),
-                edges: edges.get(),
-                nodeIdCounter: nodeIdCounter
-            };
+            const mapData = { nodes: nodes.get(), edges: edges.get(), nodeIdCounter: nodeIdCounter };
             const dataStr = JSON.stringify(mapData, null, 2);
             const blob = new Blob([dataStr], {type: "application/json"});
             const url = URL.createObjectURL(blob);
@@ -796,9 +787,8 @@
         function handleFileImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = e => {
                 try {
                     const mapData = JSON.parse(e.target.result);
                     if (mapData.nodes && mapData.edges) {
@@ -810,22 +800,19 @@
                         network.fit();
                         showToast('success', 'Mapa importado', 'El mapa se ha cargado correctamente.');
                         saveMapToLocalStorage();
-                    } else {
-                        throw new Error("El archivo JSON no tiene el formato correcto.");
-                    }
+                    } else { throw new Error("Formato de archivo incorrecto."); }
                 } catch (error) {
                     console.error("Error al importar JSON:", error);
                     showToast('error', 'Error de importación', 'El archivo no es un mapa mental válido.');
                 }
             };
             reader.readAsText(file);
-            event.target.value = ''; // Reset input para poder cargar el mismo archivo de nuevo
+            event.target.value = '';
         }
 
         // --- PERSONALIZACIÓN VISUAL ---
         function updateTheme() {
             currentTheme = themes[document.getElementById('themeSelect').value];
-            document.getElementById('colorPicker').value = currentTheme.node.background;
             applyThemeToAll();
         }
 
@@ -840,11 +827,6 @@
             });
         }
 
-        function updateColors() {
-            currentTheme.node.background = document.getElementById('colorPicker').value;
-            applyThemeToAll();
-        }
-
         function applyThemeToAll() {
             nodes.forEach(node => {
                 nodes.update({ id: node.id, ...getNodeColor(node.level) });
@@ -855,87 +837,121 @@
             saveMapToLocalStorage();
         }
         
-        async function changeNodeColor() {
-            if (!selectedNode) return;
-            const { value: color } = await Swal.fire({
-                title: 'Elige un color para el nodo', input: 'color',
-                inputValue: nodes.get(selectedNode).color.background,
-                showCancelButton: true, confirmButtonText: 'Aplicar', ...getSwalTheme()
-            });
-            if (color) {
-                nodes.update({ id: selectedNode, color: { background: color, border: color } });
-                saveMapToLocalStorage();
-            }
-        }
-        
         function getNodeColor(level = 0) {
             const opacities = ['', 'dd', 'aa', '88'];
             const opacity = opacities[level] || '66';
             return {
-                color: {
-                    background: currentTheme.node.background + opacity,
-                    border: currentTheme.node.border
-                },
+                color: { background: currentTheme.node.background + opacity, border: currentTheme.node.border },
                 font: { color: currentTheme.node.font }
             };
         }
-        
-        function togglePhysics() {
-            physicsEnabled = !physicsEnabled;
-            network.setOptions({ physics: { enabled: physicsEnabled } });
-            showToast('info', 'Física', `Simulación ${physicsEnabled ? 'activada' : 'desactivada'}.`);
-        }
 
         // --- UTILIDADES Y UI HELPERS ---
+        async function showApiConfigModal() {
+            const currentDefault = localStorage.getItem('defaultAiProvider') || 'deepseek'; 
+            const { value: formValues } = await Swal.fire({
+                title: 'Configuración de API Keys',
+                html: `
+                <div class="swal-content-container">
+                    <p>Ingresa tus claves de API para cada proveedor. Se guardarán en tu navegador.</p>
+                    <div class="api-key-input-group">
+                        <label for="swal-gemini-key">Google (Gemini)</label>
+                        <input id="swal-gemini-key" class="swal2-input" type="password" placeholder="Clave de Google AI Studio" value="${localStorage.getItem('geminiApiKey') || ''}">
+                    </div>
+                    <div class="api-key-input-group">
+                        <label for="swal-mistral-key">Mistral</label>
+                        <input id="swal-mistral-key" class="swal2-input" type="password" placeholder="Clave de Mistral AI" value="${localStorage.getItem('mistralApiKey') || ''}">
+                    </div>
+                     <div class="api-key-input-group">
+                        <label for="swal-openrouter-key">OpenRouter / DeepSeek</label>
+                        <input id="swal-openrouter-key" class="swal2-input" type="password" placeholder="Pega aquí tu clave de OpenRouter o DeepSeek" value="${localStorage.getItem('openrouterApiKey') || ''}">
+                    </div>
+                     <div class="api-key-input-group">
+                        <label for="swal-openrouter-model">Modelo de OpenRouter</label>
+                        <input id="swal-openrouter-model" class="swal2-input" type="text" placeholder="Ej: deepseek/deepseek-chat" value="${localStorage.getItem('openrouterModelName') || 'deepseek/deepseek-chat'}">
+                    </div>
+                    <div class="api-key-input-group">
+                         <label for="swal-default-provider">Proveedor por Defecto</label>
+                         <select id="swal-default-provider" class="swal2-select">
+                            <option value="none" ${currentDefault === 'none' ? 'selected' : ''}>Ninguno</option>
+                            <option value="gemini" ${currentDefault === 'gemini' ? 'selected' : ''}>Google (Gemini)</option>
+                            <option value="mistral" ${currentDefault === 'mistral' ? 'selected' : ''}>Mistral</option>
+                            <option value="deepseek" ${currentDefault === 'deepseek' ? 'selected' : ''}>DeepSeek (vía OpenRouter)</option>
+                            <option value="openrouter" ${currentDefault === 'openrouter' ? 'selected' : ''}>OpenRouter (modelo personalizado)</option>
+                         </select>
+                    </div>
+                </div>`,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Claves',
+                ...getSwalTheme(),
+                preConfirm: () => {
+                    return {
+                        gemini: document.getElementById('swal-gemini-key').value,
+                        mistral: document.getElementById('swal-mistral-key').value,
+                        openrouter: document.getElementById('swal-openrouter-key').value,
+                        openrouterModel: document.getElementById('swal-openrouter-model').value,
+                        defaultProvider: document.getElementById('swal-default-provider').value
+                    }
+                }
+            });
+
+            if (formValues) {
+                // Guarda o borra las claves de API
+                localStorage.setItem('geminiApiKey', formValues.gemini || '');
+                localStorage.setItem('mistralApiKey', formValues.mistral || '');
+                localStorage.setItem('openrouterApiKey', formValues.openrouter || '');
+                // DeepSeek usa la clave de OpenRouter, por lo que no se guarda por separado.
+                localStorage.setItem('openrouterModelName', formValues.openrouterModel || '');
+                
+                // Guarda la elección del proveedor por defecto
+                if (formValues.defaultProvider && formValues.defaultProvider !== 'none') {
+                    localStorage.setItem('defaultAiProvider', formValues.defaultProvider);
+                    document.getElementById('aiProvider').value = formValues.defaultProvider;
+                } else {
+                    localStorage.removeItem('defaultAiProvider');
+                }
+                
+                showToast('success', 'Configuración guardada.');
+            }
+        }
         
-        /**
-         * Muestra la ventana modal de ayuda con las instrucciones de la aplicación.
-         */
         function showHelpModal() {
             Swal.fire({
-                title: 'Guía de Ayuda de MindFlow',
+                title: 'Guía de Ayuda de MindFlow Pro',
                 html: `
-                    <div class="help-content">
-                        <h2>🔑 Clave de API de IA</h2>
-                        <p>Para usar las funciones de IA, necesitas una clave de API gratuita de Google. Tu clave se guarda <strong>solo en tu navegador</strong> y no se comparte.</p>
+                    <div class="swal-content-container">
+                        <h2>🤖 Múltiples Motores de IA</h2>
+                        <p>MindFlow ahora te permite elegir tu proveedor de IA preferido. Cada uno tiene sus fortalezas:</p>
                         <ul>
-                            <li><a href="https://aistudio.google.com/app/apikey" target="_blank">Obtén tu clave de API aquí.</a></li>
-                            <li><a href="#" onclick="getApiKey()">Ingresar o cambiar mi clave de API.</a></li>
+                            <li><strong>Google (Gemini):</strong> Rápido y confiable, ideal para la mayoría de los casos.</li>
+                            <li><strong>Mistral:</strong> Conocido por su razonamiento y coherencia.</li>
+                            <li><strong>DeepSeek (vía OpenRouter):</strong> Utiliza el modelo de DeepSeek a través de la API de OpenRouter.</li>
+                            <li><strong>OpenRouter:</strong> Accede a cientos de modelos (incluidos los de OpenAI, Anthropic, etc.) a través de una sola API.</li>
                         </ul>
-
-                        <h2>🤖 Funciones con IA</h2>
+                        <h2>🔑 Configuración de Claves API</h2>
+                        <p>Para usar la IA, necesitas una clave (API Key) para cada servicio que quieras usar. La aplicación te la pedirá la primera vez.</p>
                         <ul>
-                            <li><strong>Generar MindFlow:</strong> Escribe una idea y la IA creará el mapa por ti.</li>
-                            <li><strong>Expandir con IA:</strong> Haz clic derecho en un nodo y selecciona '🧠 Expandir con IA' para añadir sub-ideas.</li>
+                            <li><a href="#" onclick="Swal.close(); showApiConfigModal();">Gestionar mis claves y proveedor por defecto</a>.</li>
+                            <li>Consigue tus claves en: <a href="https://aistudio.google.com/app/apikey" target="_blank">Google</a>, <a href="https://console.mistral.ai/" target="_blank">Mistral</a>, <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a>.</li>
                         </ul>
-
-                        <h2>✍️ Edición Manual (Menú Clic Derecho)</h2>
+                        <h2>✍️ Edición y Controles</h2>
                         <ul>
-                             <li><strong>Editar/Añadir Icono:</strong> Haz doble clic en un nodo para editar su texto y emoji.</li>
-                             <li><strong>Añadir Hijo:</strong> Crea un nuevo nodo conectado al seleccionado.</li>
+                            <li><strong>Doble Clic:</strong> Edita el texto de un nodo.</li>
+                            <li><strong>Clic Derecho:</strong> Abre el menú para expandir con IA, añadir hijos, iconos y más.</li>
                         </ul>
-
-                        <h2>⚙️ Controles Generales</h2>
-                        <ul>
-                            <li><strong>Importar/Exportar JSON:</strong> Guarda y carga tu trabajo en archivos <code>.json</code>.</li>
-                            <li><strong>Exportar PNG:</strong> Guarda una imagen de tu mapa mental.</li>
-                            <li><strong>Persistencia Automática:</strong> Tu trabajo se guarda en el navegador. ¡Si recargas, tu mapa seguirá aquí!</li>
-                        </ul>
-                    </div>
-                `,
+                        <h2>💾 Importar y Exportar</h2>
+                        <p>Usa los botones para guardar tus mapas como archivos <code>.json</code> para tener copias de seguridad o compartirlos, y para exportarlos como imágenes <code>.png</code>.</p>
+                    </div>`,
                 width: '80%',
                 ...getSwalTheme()
             });
         }
 
         function exportPNG() {
-            if (nodes.length === 0) {
-                showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
-                return;
-            }
-            const container = document.getElementById('mindmap');
+            if (nodes.length === 0) return showToast('warning', 'Mapa vacío', 'No hay nada que exportar.');
             showToast('info', 'Exportando...', 'Generando imagen PNG, por favor espera.');
-            html2canvas(container.getElementsByTagName('canvas')[0], {
+            html2canvas(document.querySelector('#mindmap canvas'), {
                 backgroundColor: '#0f0f23', scale: 2, logging: false, useCORS: true
             }).then(canvas => {
                 const link = document.createElement('a');
@@ -949,9 +965,7 @@
         }
         
         function resetMapData() {
-            nodes.clear();
-            edges.clear();
-            nodeIdCounter = 0;
+            nodes.clear(); edges.clear(); nodeIdCounter = 0;
             document.getElementById('mindmap').classList.remove('has-content');
         }
 
@@ -971,8 +985,7 @@
 
         function showContextMenu(x, y) {
             const menu = document.getElementById('contextMenu');
-            menu.style.left = `${x}px`;
-            menu.style.top = `${y}px`;
+            menu.style.left = `${x}px`; menu.style.top = `${y}px`;
             menu.style.display = 'block';
         }
 
@@ -995,18 +1008,22 @@
         function editSelectedNode() { if (selectedNode) editNode(selectedNode); }
         function deleteSelectedNode() { if (selectedNode) { network.selectNodes([selectedNode]); deleteSelectedNodes(); } }
         
-        const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true,
-            didOpen: (toast) => { toast.onmouseenter = Swal.stopTimer; toast.onmouseleave = Swal.resumeTimer; }
-        });
-        function showToast(icon, title, text = '') {
-            Toast.fire({ icon, title, text, background: '#1e1b4b', color: '#f8fafc' });
-        }
+        const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+        function showToast(icon, title, text = '') { Toast.fire({ icon, title, text, background: '#1e1b4b', color: '#f8fafc' }); }
         function getSwalTheme() { return { background: '#1e1b4b', color: '#f8fafc', confirmButtonColor: '#6366f1', cancelButtonColor: '#6b7280' }; }
         
         // --- INICIALIZACIÓN DE LA APLICACIÓN ---
         window.onload = () => {
             initNetwork();
+            // Establece DeepSeek (via OpenRouter) como el proveedor por defecto al cargar.
+            localStorage.setItem('defaultAiProvider', 'deepseek');
+            document.getElementById('aiProvider').value = 'deepseek';
+            
+            // Si no hay clave de OpenRouter, pre-llena la que proporcionaste.
+            if (!localStorage.getItem('openrouterApiKey')) {
+                localStorage.setItem('openrouterApiKey', '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');
+            }
+            
             loadMapFromLocalStorage();
             document.getElementById('promptInput').addEventListener('keypress', e => {
                 if (e.key === 'Enter') generateMindMap();
